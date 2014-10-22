@@ -16,6 +16,7 @@ import javafx.scene.PointLight;
 import javafx.scene.Scene;
 import javafx.scene.SceneAntialiasing;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
@@ -37,6 +38,11 @@ import org.fxyz.tests.SkyBoxTest;
  * -...
  */
 public class TweetWallFX extends Application {
+    
+    private double mousePosX;
+    private double mousePosY;
+    private double mouseOldX;
+    private double mouseOldY;
     
     private Group root;
     private Skybox skyBox;
@@ -97,7 +103,7 @@ public class TweetWallFX extends Application {
 
             SegmentedTorus torus = new SegmentedTorus(56, 50, 0, randomRadius, randomTubeRadius-0, randomColor);
             SegmentedTorus twTorus = new SegmentedTorus(56, 50, 14, randomRadius, randomTubeRadius, randomColor.brighter().brighter());
-            twTorus.setDiffuseMap(new Image(getClass().getResourceAsStream("tweet2.jpg"))); 
+            twTorus.setDiffuseMap(new Image(getClass().getResourceAsStream("tweet1.jpg"))); 
             
             Translate translate = new Translate(fixPos.get(i).getX(), fixPos.get(i).getY(), fixPos.get(i).getZ());
             Rotate rotateX = new Rotate(Math.random() * 45, Rotate.X_AXIS);
@@ -112,6 +118,20 @@ public class TweetWallFX extends Application {
         Scene scene = new Scene(new Group(root), 1024, 720, true, SceneAntialiasing.BALANCED);
         scene.setFill(Color.TRANSPARENT);
         scene.setCamera(camera);
+        
+        scene.setOnMousePressed((MouseEvent me) -> {
+            mousePosX = me.getSceneX();
+            mousePosY = me.getSceneY();
+        });
+        scene.setOnMouseDragged((MouseEvent me) -> {
+            mouseOldX = mousePosX;
+            mouseOldY = mousePosY;
+            mousePosX = me.getSceneX();
+            mousePosY = me.getSceneY();
+            cameraTransform.ry.setAngle(((cameraTransform.ry.getAngle() + (mousePosX - mouseOldX) * 2.0) % 360 + 540) % 360 - 180); 
+            cameraTransform.rx.setAngle(((cameraTransform.rx.getAngle() - (mousePosY - mouseOldY) * 2.0) % 360 + 540) % 360 - 180); 
+                
+        });
         
         primaryStage.setTitle("TweetWallFX Test - Devoxx 2014");
         primaryStage.setScene(scene);
