@@ -18,6 +18,7 @@ import javafx.scene.SceneAntialiasing;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.DrawMode;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
@@ -102,7 +103,7 @@ public class TweetWallFX extends Application {
             Color randomColor = new Color(r.nextDouble(), r.nextDouble(), r.nextDouble(), r.nextDouble());
 
             SegmentedTorus torus = new SegmentedTorus(56, 50, 0, randomRadius, randomTubeRadius-0, randomColor);
-            SegmentedTorus twTorus = new SegmentedTorus(56, 50, 14, randomRadius, randomTubeRadius, randomColor.brighter().brighter());
+            SegmentedTorus twTorus = new SegmentedTorus(56, 50, 14, randomRadius, randomTubeRadius, Color.WHITESMOKE);
             twTorus.setDiffuseMap(new Image(getClass().getResourceAsStream("tweet1.jpg"))); 
             
             Translate translate = new Translate(fixPos.get(i).getX(), fixPos.get(i).getY(), fixPos.get(i).getZ());
@@ -145,7 +146,7 @@ public class TweetWallFX extends Application {
         final Timeline timeTori = new Timeline();
         timeTori.setCycleCount(Timeline.INDEFINITE);
         final KeyValue kv1 = new KeyValue(rotateY.angleProperty(), 360);
-        final KeyFrame kf1 = new KeyFrame(Duration.millis(20000), kv1);
+        final KeyFrame kf1 = new KeyFrame(Duration.millis(15000), kv1);
         timeTori.getKeyFrames().addAll(kf1);
         timeTori.play();
         

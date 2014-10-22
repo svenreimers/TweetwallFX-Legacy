@@ -275,15 +275,19 @@ public class SegmentedTorusMesh extends MeshView {
         // Create points and texCoords
         for (int y = crop; y <= subDivY-crop; y++) {
             float dy = (float) y / subDivY;
-            for (int x = crop; x <= subDivX-crop; x++) {
-                float dx = (float) x / subDivX;
-                int index = (y-crop) * numDivX * pointSize + ((x-crop) * pointSize);
-                points[index] = (float) ((radius+tRadius*Math.cos((-1d+2d*dy)*Math.PI))*(Math.cos((-1d+2d*dx)*Math.PI)+ xOffset));
-                points[index + 2] = (float) ((radius+tRadius*Math.cos((-1d+2d*dy)*Math.PI))*(Math.sin((-1d+2d*dx)*Math.PI)+ yOffset));
-                points[index + 1] = (float) (tRadius*Math.sin((-1d+2d*dy)*Math.PI)*zOffset);
-                index = (y-crop) * numDivX * texCoordSize + ((x-crop) * texCoordSize);
-                texCoords[index] = (((float)(x-crop))/((float)(subDivX-2f*crop)));
-                texCoords[index + 1] = (((float)(y-crop))/((float)(subDivY-2f*crop)));
+            if(crop>0 || (crop==0 && y<subDivY)){
+                for (int x = crop; x <= subDivX-crop; x++) {
+                    float dx = (float) x / subDivX;
+                    if(crop>0 || (crop==0 && x<subDivX)){
+                        int index = (y-crop) * numDivX * pointSize + ((x-crop) * pointSize);
+                        points[index] = (float) ((radius+tRadius*Math.cos((-1d+2d*dy)*Math.PI))*(Math.cos((-1d+2d*dx)*Math.PI)+ xOffset));
+                        points[index + 2] = (float) ((radius+tRadius*Math.cos((-1d+2d*dy)*Math.PI))*(Math.sin((-1d+2d*dx)*Math.PI)+ yOffset));
+                        points[index + 1] = (float) (tRadius*Math.sin((-1d+2d*dy)*Math.PI)*zOffset);
+                        index = (y-crop) * numDivX * texCoordSize + ((x-crop) * texCoordSize);
+                        texCoords[index] = (((float)(x-crop))/((float)(subDivX-2f*crop)));
+                        texCoords[index + 1] = (((float)(y-crop))/((float)(subDivY-2f*crop)));
+                    }
+                }
             }
         }
         // Create faces
@@ -291,15 +295,32 @@ public class SegmentedTorusMesh extends MeshView {
             for (int x = crop; x < subDivX-crop; x++) {
                 int p00 = (y-crop) * numDivX + (x-crop);
                 int p01 = p00 + 1;
+                if(crop==0 && x==subDivX-1){
+                    p01-=subDivX;
+                }
                 int p10 = p00 + numDivX;
+                if(crop==0 && y==subDivY-1){
+                    p10-=subDivY*numDivX;
+                }
                 int p11 = p10 + 1;
+                if(crop==0 && x==subDivX-1){
+                    p11-=subDivX;
+                }
                 
                 int tc00 = (y-crop) * numDivX + (x-crop);
                 int tc01 = tc00 + 1;
+                if(crop==0 && x==subDivX-1){
+                    tc01-=subDivX;
+                }
                 int tc10 = tc00 + numDivX;
+                if(crop==0 && y==subDivY-1){
+                    tc10-=subDivY*subDivX;
+                }
                 int tc11 = tc10 + 1;
- 
-                int index = ((y-crop) * (subDivX-2*crop) * faceSize + ((x-crop) * faceSize)) * 2;
+                if(crop==0 && x==subDivX-1){
+                    tc11-=subDivX;
+                }
+                int index = ((y-crop) * (numDivX-1) * faceSize + ((x-crop) * faceSize)) * 2;
                 faces[index + 0] = p00;
                 faces[index + 1] = tc00;
                 faces[index + 2] = p10;
