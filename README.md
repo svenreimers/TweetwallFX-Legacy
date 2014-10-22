@@ -8,6 +8,7 @@ box there are several tori with rotating banners containing snapshot of tweets r
 to @devoxx
 
 Requires JDK8u20
+
 Dependencies: [F(x)yz](https://github.com/Birdasaur/FXyz/blob/master/binaries/FXyzLib.jar) library
 
 
