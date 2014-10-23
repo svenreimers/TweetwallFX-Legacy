@@ -8,6 +8,8 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 import javafx.geometry.Point3D;
 import javafx.scene.DepthTest;
 import javafx.scene.Group;
@@ -18,7 +20,6 @@ import javafx.scene.SceneAntialiasing;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.DrawMode;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
@@ -26,10 +27,14 @@ import javafx.util.Duration;
 import org.fxyz.cameras.CameraTransformer;
 import org.fxyz.extras.Skybox;
 import org.fxyz.tests.SkyBoxTest;
+import twitter.CLogOut;
+import twitter.TweetsToTori;
+import twitter.TwitterOAuth;
+import twitter4j.conf.Configuration;
 
 /**
  * TweetWallFX - Devoxx 2014
- * @johanvos @SvenNB @SeanMiPhillips @JPeredaDnr
+ * @johanvos @SvenNB @SeanMiPhillips @jdub1581 @JPeredaDnr
  * 
  * JavaFX 3D Application that renders an SkyBox cube from F(x)yz library 
  * Inside the box there are several tori with rotating banners containing
@@ -51,6 +56,9 @@ public class TweetWallFX extends Application {
     private PerspectiveCamera camera;
     private final double cameraDistance = 5000;
     private final CameraTransformer cameraTransform = new CameraTransformer();
+    private final int MAX_TORI = 5;
+    private final Group toriGroup = new Group();
+    private final Group twToriGroup = new Group();
     
     private final Image 
         top = new Image(SkyBoxTest.class.getResource("res/top.png").toExternalForm()),
@@ -59,6 +67,11 @@ public class TweetWallFX extends Application {
         right = new Image(SkyBoxTest.class.getResource("res/right.png").toExternalForm()),
         front = new Image(SkyBoxTest.class.getResource("res/front.png").toExternalForm()),
         back = new Image(SkyBoxTest.class.getResource("res/back.png").toExternalForm());
+    
+    private Configuration conf;
+    private CLogOut log;
+    private final String hashtag = "#Google";
+    private TweetsToTori tweetsTask;
     
     @Override
     public void start(Stage primaryStage) {
@@ -87,7 +100,7 @@ public class TweetWallFX extends Application {
         skyBox = new Skybox(top, bottom, left, right, front, back,
                             size, camera);
         
-        Group toriGroup = new Group();
+        
         toriGroup.setDepthTest(DepthTest.ENABLE);
         toriGroup.getChildren().add(cameraTransform);
         
@@ -96,14 +109,14 @@ public class TweetWallFX extends Application {
                 new Point3D(-tam/2, tam/2, -tam/2), new Point3D(tam/2, -tam/2, tam/2),
                 new Point3D(-3*tam/4, -3*tam/4, 3*tam/4), new Point3D(0, 0, 0));
         
-        IntStream.range(0,5).boxed().forEach(i->{
+        IntStream.range(0,MAX_TORI).boxed().forEach(i->{
             Random r = new Random();
             float randomRadius = (float) ((r.nextFloat() * 100) + 550);
             float randomTubeRadius = (float) ((r.nextFloat() * 100) + 300);
             Color randomColor = new Color(r.nextDouble(), r.nextDouble(), r.nextDouble(), r.nextDouble());
 
-            SegmentedTorus torus = new SegmentedTorus(56, 50, 0, randomRadius, randomTubeRadius-0, randomColor);
-            SegmentedTorus twTorus = new SegmentedTorus(56, 50, 14, randomRadius, randomTubeRadius, Color.WHITESMOKE);
+            SegmentedTorus torus = new SegmentedTorus(50, 42, 0, randomRadius, randomTubeRadius, randomColor);
+            SegmentedTorus twTorus = new SegmentedTorus(50, 42, 14, randomRadius, randomTubeRadius, Color.WHITESMOKE);
             twTorus.setDiffuseMap(new Image(getClass().getResourceAsStream("tweet1.jpg"))); 
             
             Translate translate = new Translate(fixPos.get(i).getX(), fixPos.get(i).getY(), fixPos.get(i).getZ());
@@ -113,7 +126,8 @@ public class TweetWallFX extends Application {
 
             torus.getTransforms().addAll(translate, rotateX, rotateY0, rotateZ, rotateY); 
             twTorus.getTransforms().addAll(translate, rotateX, rotateY0, rotateZ, rotateY);
-            toriGroup.getChildren().addAll(torus,twTorus);
+            toriGroup.getChildren().addAll(torus);
+            twToriGroup.getChildren().addAll(twTorus);
         });
         
         Scene scene = new Scene(new Group(root), 1024, 720, true, SceneAntialiasing.BALANCED);
@@ -138,8 +152,34 @@ public class TweetWallFX extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
         
-        root.getChildren().addAll(skyBox, toriGroup);
+        root.getChildren().addAll(skyBox, toriGroup, twToriGroup);
         root.setAutoSizeChildren(true);
+        
+        /* TWITTER */
+        log=CLogOut.getInstance();
+        log.getMessages().addListener((ob,s,s1)->System.out.println(s1));
+        
+        final Service service=new Service<Void>(){
+            @Override protected Task<Void> createTask() {                
+                Task<Void> task = new Task<Void>(){
+                    @Override protected Void call() throws Exception {
+                        conf = TwitterOAuth.getInstance().readOAuth();
+                        return null;
+                    }
+                };
+                return task;
+            }
+        };
+        
+        service.setOnSucceeded(e->{
+            if(!hashtag.isEmpty() && conf!=null){
+                System.out.println("starting search for "+hashtag);
+                tweetsTask= new TweetsToTori(conf, hashtag, twToriGroup);
+                tweetsTask.start();
+            }
+        });
+        
+        service.start();
         
         /* ANIMATIONS */
         
@@ -158,6 +198,12 @@ public class TweetWallFX extends Application {
         timeSky.play();
     }
 
+    @Override
+    public void stop(){
+        if(tweetsTask!=null){
+            tweetsTask.stop();
+        }
+    }
     /**
      * @param args the command line arguments
      */
