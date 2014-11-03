@@ -12,7 +12,7 @@ import twitter4j.conf.ConfigurationBuilder;
 
 /**
  * TweetWallFX - Devoxx 2014
- * @johanvos @SvenNB @SeanMiPhillips @jdub1581 @JPeredaDnr
+ * {@literal @}johanvos {@literal @}SvenNB {@literal @}SeanMiPhillips {@literal @}jdub1581 {@literal @}JPeredaDnr
  * 
  * Place your oauth credentials in a properties file:
  

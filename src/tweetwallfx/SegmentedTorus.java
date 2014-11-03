@@ -11,7 +11,7 @@ import org.fxyz.shapes.containers.ShapeContainer;
 
 /**
  * TweetWallFX - Devoxx 2014
- * @johanvos @SvenNB @SeanMiPhillips @JPeredaDnr
+ * {@literal @}johanvos {@literal @}SvenNB {@literal @}SeanMiPhillips {@literal @}jdub1581 {@literal @}JPeredaDnr
  * 
  * SegmentedTorus is based in Torus from F(x)yz, but allows a segmented Torus Mesh
  */

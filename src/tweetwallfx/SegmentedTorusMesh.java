@@ -11,7 +11,7 @@ import javafx.scene.shape.TriangleMesh;
 
 /**
  * TweetWallFX - Devoxx 2014
- * @johanvos @SvenNB @SeanMiPhillips @JPeredaDnr
+ * {@literal @}johanvos {@literal @}SvenNB {@literal @}SeanMiPhillips {@literal @}jdub1581 {@literal @}JPeredaDnr
  * 
  * SegmentedTorusMesh is based in TorusMesh from F(x)yz, but allows cutting the torus in two 
  * directions, in order to have a banner parallel to an uncut torus.

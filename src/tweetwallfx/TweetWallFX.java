@@ -35,7 +35,7 @@ import twitter4j.conf.Configuration;
 
 /**
  * TweetWallFX - Devoxx 2014
- * @johanvos @SvenNB @SeanMiPhillips @jdub1581 @JPeredaDnr
+ * {@literal @}johanvos {@literal @}SvenNB {@literal @}SeanMiPhillips {@literal @}jdub1581 {@literal @}JPeredaDnr
  * 
  * JavaFX 3D Application that renders an SkyBox cube from F(x)yz library 
  * Inside the box there are several tori with rotating banners containing

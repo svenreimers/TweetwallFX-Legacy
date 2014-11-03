@@ -5,7 +5,7 @@ import twitter4j.Status;
 
 /**
  * TweetWallFX - Devoxx 2014
- * @johanvos @SvenNB @SeanMiPhillips @jdub1581 @JPeredaDnr
+ * {@literal @}johanvos {@literal @}SvenNB {@literal @}SeanMiPhillips {@literal @}jdub1581 {@literal @}JPeredaDnr
  *
  * @author jpereda
  */

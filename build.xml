@@ -50,4 +50,22 @@
     nbproject/build-impl.xml and nbproject/jfx-impl.xml.
 
     -->
+    
+    <target name="-post-jfx-deploy">
+       <fx:deploy width="600" height="400" 
+                  nativeBundles="dmg"
+                  outdir="${basedir}/${dist.dir}" outfile="${application.title}">
+          <fx:application name="${application.title}" 
+                          mainClass="${javafx.main.class}"/>    
+          <fx:resources>
+              <fx:fileset dir="${basedir}/${dist.dir}"
+                          includes="*.jar"/>
+              <fx:fileset dir="${basedir}"
+                          includes="lib/**/*.jar"/>
+          </fx:resources>
+          <fx:info title="${application.title}" 
+                   vendor="${application.vendor}"/>
+        </fx:deploy>          
+     </target>
+    
 </project>

@@ -97,7 +97,7 @@ public class FXTimer {
     /**
      * delay: initial delay
      *
-     * @return
+     * @return ObjectProperty representing the delay
      */
     public ObjectProperty<Duration> delayProperty() {
         return this.delay;
@@ -115,7 +115,7 @@ public class FXTimer {
     /**
      * cycleDuration: time between fires
      *
-     * @return
+     * @return ObjectProperty representing cycleDuration
      */
     public ObjectProperty<Duration> cycleDurationProperty() {
         return this.cycleDuration;

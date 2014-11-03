@@ -42,7 +42,7 @@ import twitter4j.conf.Configuration;
 
 /**
  * TweetWallFX - Devoxx 2014
- * @johanvos @SvenNB @SeanMiPhillips @jdub1581 @JPeredaDnr
+ * {@literal @}johanvos {@literal @}SvenNB {@literal @}SeanMiPhillips {@literal @}jdub1581 {@literal @}JPeredaDnr
  * 
  * Tasks to perform a search on Twitter for some hashtag, create an HBox with each
  * tweets, crate a snapshot and then load the image as diffuseMap of a segmented torus
