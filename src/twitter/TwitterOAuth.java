@@ -49,6 +49,8 @@ public class TwitterOAuth {
         Properties props = new Properties();
         
         try {
+            /* MyRealOAuth.properties -> this file is not commited to the repo. 
+               Ask for it or provide your own keys. */
             props.load(TwitterOAuth.class.getResourceAsStream("MyOAuth.properties"));
         } catch (FileNotFoundException ex) {
             System.out.println("Error finding properties file: "+ ex);
