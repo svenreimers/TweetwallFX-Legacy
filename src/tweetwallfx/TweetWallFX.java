@@ -13,7 +13,6 @@ import javafx.concurrent.Task;
 import javafx.geometry.Point3D;
 import javafx.scene.DepthTest;
 import javafx.scene.Group;
-import javafx.scene.PerspectiveCamera;
 import javafx.scene.PointLight;
 import javafx.scene.Scene;
 import javafx.scene.SceneAntialiasing;
@@ -24,9 +23,11 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.fxyz.cameras.AdvancedCamera;
 import org.fxyz.cameras.CameraTransformer;
 import org.fxyz.extras.Skybox;
 import org.fxyz.tests.SkyBoxTest;
+import tweetwallfx.jdub1581.DevoxxBillboardLogo;
 import twitter.CLogOut;
 import twitter.TweetsToTori;
 import twitter.TwitterOAuth;
@@ -53,7 +54,7 @@ public class TweetWallFX extends Application {
     private Group root;
     private Skybox skyBox;
     final Rotate rotateY = new Rotate(0, 0, 0, 0, Rotate.Y_AXIS);
-    private PerspectiveCamera camera;
+    private AdvancedCamera camera;
     private final double cameraDistance = 5000;
     private final CameraTransformer cameraTransform = new CameraTransformer();
     private final int MAX_TORI = 5;
@@ -77,7 +78,7 @@ public class TweetWallFX extends Application {
     public void start(Stage primaryStage) {
         root = new Group();
         
-        camera = new PerspectiveCamera(true);
+        camera = new AdvancedCamera();
         cameraTransform.setTranslate(0, 0, 0);
         cameraTransform.getChildren().addAll(camera);
         camera.setNearClip(0.1);
@@ -106,8 +107,8 @@ public class TweetWallFX extends Application {
         
         double tam = 2048;
         List<Point3D> fixPos=FXCollections.observableArrayList(new Point3D(tam/2, tam/2, tam/2),
-                new Point3D(-tam/2, tam/2, -tam/2), new Point3D(tam/2, -tam/2, tam/2),
-                new Point3D(-3*tam/4, -3*tam/4, 3*tam/4), new Point3D(0, 0, 0));
+                new Point3D(-tam/2, tam/2, -tam/2), new Point3D(tam, -tam/2, tam/2),
+                new Point3D(-tam, -3*tam/4, 3*tam/4), new Point3D(0, 0, 0));
         
         IntStream.range(0,MAX_TORI).boxed().forEach(i->{
             Random r = new Random();
@@ -130,9 +131,21 @@ public class TweetWallFX extends Application {
             twToriGroup.getChildren().addAll(twTorus);
         });
         
+        DevoxxBillboardLogo logo = new DevoxxBillboardLogo(1500,700); 
+        logo.setFrequency(20.0f);
+        logo.setPeriod(55.0f);
+        logo.setWaveLength(80.0f);
+        logo.setAmplitude(35.0f);
+        logo.setTranslateZ(1800);
+        logo.setTranslateY(-2700);
+        PointLight light2 = new PointLight(Color.WHITESMOKE);
+        light2.setTranslateY(-250);
+        light2.translateZProperty().bind(logo.translateZProperty().subtract(800));
+        
         Scene scene = new Scene(new Group(root), 1024, 720, true, SceneAntialiasing.BALANCED);
         scene.setFill(Color.TRANSPARENT);
         scene.setCamera(camera);
+        root.getChildren().addAll(camera.getWrapper(), logo, light2);
         
         scene.setOnMousePressed((MouseEvent me) -> {
             mousePosX = me.getSceneX();
