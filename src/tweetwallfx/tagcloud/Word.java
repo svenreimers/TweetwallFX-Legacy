@@ -25,7 +25,7 @@ class Word implements Comparable<Word> {
         this.text = text;
         this.weight = weight;
         textNode = new Text(text);
-        textNode.setStyle("-fx-font-size: " + (int) (2 * weight));
+        textNode.setStyle("-fx-font-size: " + (int) (2 * Math.min(50,weight)));
         textNode.setBoundsType(TextBoundsType.VISUAL);
     }
 

@@ -19,20 +19,30 @@ import javafx.scene.layout.Pane;
  *
  * @author sven
  */
-class Wordle extends Pane {
+public class Wordle extends Pane {
 
-    private Random rand = new Random();
-    private int dDeg = 10;
-    private double dRadius = 5.0;
+    private final Random rand = new Random();
+    private final int dDeg = 10;
+    private final double dRadius = 5.0;
     ObservableList<Word> words = FXCollections.<Word>observableArrayList();
     List<Word> sortedWords = new SortedList<>(words);
 
-    void addWord(String word, double weight) {
+    public Wordle(){
+        setStyle("-fx-border-width: 1px; -fx-border-color: black;");
+    }
+    public void addWord(String word, double weight) {
         Word w = new Word(word, weight);
         words.add(w);
         getChildren().add(w.getNode());
     }
 
+    public void formatWords(List<String> highLightWords){
+//        words.forEach(w->w.getNode().setStyle("-fx-fill: black;"));
+//        words.stream()
+//            .filter(w->highLightWords.contains(w.getNode().getText()))
+//            .forEach(w->w.getNode().setStyle("-fx-fill: red;"));
+    }
+    
     @Override
     protected void layoutChildren() {
         for (int i = 1; i < sortedWords.size(); ++i) {
@@ -45,7 +55,7 @@ class Wordle extends Pane {
                     center = center.add((wPrev.getWidth() / 2d) * wPrev.weight, (wPrev.getHeight() / 2d) * wPrev.weight);
                     totalWeight += wPrev.weight;
                 }
-                center = center.multiply(1 / totalWeight);
+                center = center.multiply(1d / totalWeight);
             }
             boolean done = false;
             double radius = 0.5 * Math.min(sortedWords.get(0).getWidth(), sortedWords.get(0).getHeight());
@@ -63,9 +73,8 @@ class Wordle extends Pane {
                     prev_x = center.getX();
                     prev_y = center.getY();
                     Bounds mayBe = new BoundingBox(center.getX() - word.getWidth() / 2d, center.getY() - word.getHeight() / 2d, word.getWidth(), word.getHeight());
-                    int prev = 0;
                     boolean useable = true;
-                    for (prev = 0; prev < i; ++prev) {
+                    for (int prev = 0; prev < i; ++prev) {
 //                            System.out.println("MayBe: " + mayBe + " ? " + mayBe.isEmpty());
 //                            System.out.println("intersects: " + prev + " " + words.get(prev).getBounds() + " ? " + words.get(prev).getBounds().isEmpty());
                         if (mayBe.intersects(words.get(prev).getBounds())) {
@@ -86,7 +95,7 @@ class Wordle extends Pane {
         Bounds ownBounds = getLayoutBounds();
         double shiftXCenter = ownBounds.getWidth() / 2d;
         double shiftYCenter = ownBounds.getHeight() / 2d;
-        words.forEach((tweetwallfx.tagcloud.Word word) -> {
+        words.forEach(word -> {
             word.getNode().setLayoutX(word.getWordleCenter().getX() - word.getWidth() / 2d + shiftXCenter);
             word.getNode().setLayoutY(word.getWordleCenter().getY() - word.getHeight() / 2d + shiftYCenter);
         });
