@@ -45,7 +45,7 @@ class Word implements Comparable<Word> {
     public double getHeight() {
         return textNode.getLayoutBounds().getHeight() + 10;
     }
-
+    
     public void setWordleCenter(Point2D center) {
         this.center = center;
     }
@@ -56,6 +56,14 @@ class Word implements Comparable<Word> {
 
     public Bounds getBounds() {
         return new BoundingBox(center.getX() - getWidth() / 2d, center.getY() - getHeight() / 2d, getWidth(), getHeight());
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
     }
 
     @Override

@@ -5,8 +5,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -34,7 +36,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import tweetwallfx.tagcloud.Wordle;
 import twitter.TweetInfo;
 import twitter4j.FilterQuery;
 import twitter4j.Query;
@@ -70,7 +71,7 @@ public class TagTweets {
     private final ExecutorService showTweetsExecutor = createExecutor("ShowTweets");
     private final ShowTweetsTask showTweetsTask;
     
-    private final Wordle wordle = new Wordle();
+    private Wordle wordle;
     
     private TreeMap<String,Long> tree;
     
@@ -78,8 +79,10 @@ public class TagTweets {
     private final Configuration conf;
     private final StackPane root;
     private final HBox hBottom = new HBox();
+    private final HBox hWordle = new HBox();
     
-    
+    private final Comparator<Map.Entry<String,Long>> comparator = Comparator.comparingLong(Map.Entry::getValue);
+            
     public TagTweets(Configuration conf, String searchText, StackPane root){
         this.conf=conf;
         this.searchText=searchText;
@@ -88,39 +91,26 @@ public class TagTweets {
     }
     
     public void start(){
+            
+            hWordle.setAlignment(Pos.CENTER);
+            hWordle.setPadding(new Insets(20));
+            VBox.setVgrow(hWordle,Priority.ALWAYS);
+
+            hBottom.setMinHeight(150);
+            hBottom.setPrefHeight(150);
+            VBox vbox = new VBox(hWordle, hBottom);
+
+            root.getChildren().setAll(vbox);
+            
         try {
             System.out.println("** 1. Creating Tag Cloud for "+searchText);
             Query query = new Query(searchText);
             query.setCount(100);
             Twitter twitter = new TwitterFactory(conf).getInstance();
             QueryResult result = twitter.search(query);
-            
-            System.out.print("TAGS: ");
-            tree = buildTagCloud(result.getTweets());            
-            
-            tree.entrySet().stream()
-//                .filter(entry -> entry.getValue() > MIN_WEIGHT)
-                .sorted(Map.Entry.comparingByValue(Long::compareTo))
-                .skip(tree.size()-NUM_MAX_WORDS)
-//                    .peek(e->System.out.print(e+" "))
-                .forEach(entry -> wordle.addWord(entry.getKey(), entry.getValue()));
-//            System.out.println("");
-            
-            Platform.runLater(()->{
-            
-                HBox hWordle = new HBox(wordle);
-                hWordle.setAlignment(Pos.CENTER);
-                hWordle.setPadding(new Insets(20));
-                VBox.setVgrow(hWordle,Priority.ALWAYS);
-                
-                hBottom.setMinHeight(150);
-                hBottom.setPrefHeight(150);
-                VBox vbox = new VBox(hWordle, hBottom);
-                
-                root.getChildren().setAll(vbox);
-               
-                wordle.requestLayout();
-            });
+
+            buildTagCloud(result.getTweets());            
+            createWordle();
             
         } catch (TwitterException ex) {
             System.out.println("Error Twitter: "+ex);
@@ -159,9 +149,8 @@ public class TagTweets {
                 addListener(s->{
                     try {
                         TweetInfo info = new TweetInfo(s);
-                        List<String> words=checkTags(info);
+                        List<String> words=checkNewTweetHasTags(info);
                         if(words.size()>0){
-                            System.out.println("Tw: "+info.getText());
                             tweets.put(createTweetInfoBox(info,words));
                         } else {
                             System.out.println("No valid tags");
@@ -187,6 +176,10 @@ public class TagTweets {
 
 
         private Parent createTweetInfoBox(TweetInfo info, List<String> words) {
+            
+            // update & redraw wordle with new/same words
+            Platform.runLater(()->createWordle());
+
             HBox hbox = new HBox(20);
             hbox.setStyle("-fx-padding: 20px;");
             hbox.setPrefHeight(150);
@@ -209,21 +202,21 @@ public class TagTweets {
             handle.setStyle("-fx-font: 22px \"Andalus\"; -fx-text-fill: #8899A6;");
             hName.getChildren().addAll(name,handle);
         
-            System.out.print("WORDS: ");
-            words.forEach(w->System.out.print(w+", "));
-            System.out.println("");
 //            wordle.formatWords(words);
-
-            String status=info.getText().replaceAll("[^\\dA-Za-z ]", " ");
-        
-            List<String> collect = pattern.splitAsStream(status).collect(Collectors.toList());
             
+            System.out.println("Tw: "+info.getText());
             TextFlow flow = new TextFlow();
-            collect.forEach(w->{
-                Text textWord = new Text(w.concat(" "));
-                textWord.setStyle("-fx-font: 18px \"Andalus\"; -fx-fill: "+(words.contains(w.toLowerCase())?"red;":"#292F33;"));
-                flow.getChildren().add(textWord);
-            });
+            pattern.splitAsStream(info.getText())
+                .forEach(w->{
+                    Text textWord = new Text(w.concat(" "));
+                    String color="#292F33";
+                    if(words.stream().anyMatch(tag->w.toLowerCase().contains(tag))){
+                        color="red";
+                    }
+                    textWord.setStyle("-fx-font: 18px \"Andalus\"; -fx-fill: "+color+";");
+                    flow.getChildren().add(textWord);
+                });
+
             VBox vbox = new VBox(10);
             vbox.getChildren().addAll(hName, flow);
             hbox.getChildren().addAll(hImage, vbox);
@@ -231,21 +224,35 @@ public class TagTweets {
             return hbox;
         }
 
-        private List<String> checkTags(TweetInfo info) {
+        private List<String> checkNewTweetHasTags(TweetInfo info) {
             
-            String status=info.getText().replaceAll("[^\\dA-Za-z ]", " ");
-        
-            List<String> collect = pattern.splitAsStream(status).map(s->s.toLowerCase())
+            String status = info.getText().replaceAll("[^\\dA-Za-z ]", " ");
+            
+            List<String> collect = pattern.splitAsStream(status)
+                    .map(String::toLowerCase)
                     .collect(Collectors.toList());
             
-            List<String> words = tree.entrySet().stream()
-                    .sorted(Map.Entry.comparingByValue(Long::compareTo))
-                    .skip(tree.size()-NUM_MAX_WORDS)
-                    .filter(entry->collect.contains(entry.getKey()))
-//                    .peek(System.out::println)
-                    .map(entry->entry.getKey())
+            // add words to tree and update weights
+            collect.stream()
+                .filter(w -> w.length() > 2)
+                .filter(w->!stopList.contains(w))
+                .forEach(w->tree.put(w,(tree.containsKey(w)?tree.get(w):0)+1l));
+            
+            // check if there is any word in the tags in the wall 
+            if(tree.entrySet().stream()
+                .sorted(comparator.reversed())
+                .limit(NUM_MAX_WORDS)
+                .anyMatch(entry->collect.contains(entry.getKey()))){
+                
+                // return a list of all the words on the wall
+                return tree.entrySet().stream()
+                    .sorted(comparator.reversed())
+                    .limit(NUM_MAX_WORDS)
+                    .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
-            return words;
+            }
+            
+            return new ArrayList<>();
         }
     }
   
@@ -271,10 +278,7 @@ public class TagTweets {
             // render the chart in an offscreen scene (scene is used to allow css processing) and snapshot it to an image.
             // the snapshot is done in runlater as it must occur on the javafx application thread.
             Platform.runLater(() -> {
-                System.out.println("** Loading new Tweet & updating Wall");
                 hBottom.getChildren().setAll(tweetContainer);
-                
-                wordle.requestLayout();
                 
                 latch.countDown();
             });
@@ -285,7 +289,6 @@ public class TagTweets {
   
     private class ShowTweetsTask<Void> extends Task {
         private final BlockingQueue<Parent>        tweets         = new ArrayBlockingQueue(5);
-        private final BlockingQueue<BufferedImage> bufferedImages = new ArrayBlockingQueue(5);
         private final ExecutorService    tweetsCreationExecutor   = createExecutor("CreateTweets");
         private final ExecutorService    tweetsSnapshotExecutor   = createExecutor("TakeSnapshots");
         private final TweetsCreationTask tweetsCreationTask;
@@ -327,19 +330,24 @@ public class TagTweets {
         return Executors.newSingleThreadExecutor(factory);
     }  
 
-    private TreeMap<String, Long> buildTagCloud(List<Status> tweets) {
+    private void buildTagCloud(List<Status> tweets) {
         Stream<String> map = tweets.stream()
-                .map(t -> t.getText().replaceAll("[^\\dA-Za-z ]", " "));
-        TreeMap<String, Long> answer = map
-                .flatMap(c -> pattern.splitAsStream(c))
-                .filter(l -> l.length() > 2)
-                .filter(l->!stopList.contains(l.toLowerCase()))
-                .collect(Collectors.groupingBy(String::toLowerCase, TreeMap::new, Collectors.counting()));
-        System.out.println("#######33words: "+answer.size());
-
-//        answer.forEach((t,u) -> { if (u > 1)
-//            System.out.println(t+ " --> "+u);
-//        });
-        return answer;
+            .map(t -> t.getText().replaceAll("[^\\dA-Za-z ]", " "));
+        tree = map.flatMap(c -> pattern.splitAsStream(c))
+            .filter(l -> l.length() > 2)
+            .filter(l->!stopList.contains(l.toLowerCase()))
+            .collect(Collectors.groupingBy(String::toLowerCase, TreeMap::new, Collectors.counting()));
     }
+    
+    private void createWordle(){
+        wordle=new Wordle();
+        tree.entrySet().stream()
+            .sorted(comparator)
+            .skip(tree.size()-NUM_MAX_WORDS)
+            .forEach(entry -> wordle.setWord(entry.getKey(), entry.getValue()));
+        
+        hWordle.getChildren().setAll(wordle);
+        wordle.requestLayout();
+    }
+    
 }

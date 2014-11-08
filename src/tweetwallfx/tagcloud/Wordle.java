@@ -30,7 +30,8 @@ public class Wordle extends Pane {
     public Wordle(){
         setStyle("-fx-border-width: 1px; -fx-border-color: black;");
     }
-    public void addWord(String word, double weight) {
+    
+    public void setWord(String word, double weight) {
         Word w = new Word(word, weight);
         words.add(w);
         getChildren().add(w.getNode());
