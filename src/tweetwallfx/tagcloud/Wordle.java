@@ -7,6 +7,7 @@ package tweetwallfx.tagcloud;
 
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.SortedList;
@@ -24,8 +25,10 @@ public class Wordle extends Pane {
     private final Random rand = new Random();
     private final int dDeg = 10;
     private final double dRadius = 5.0;
-    ObservableList<Word> words = FXCollections.<Word>observableArrayList();
-    List<Word> sortedWords = new SortedList<>(words);
+    private final ObservableList<Word> words = FXCollections.<Word>observableArrayList();
+//    private final ObservableList<Word> fadeOutWords = FXCollections.<Word>observableArrayList();
+//    private final ObservableList<Text> fadeInWords = FXCollections.<Text>observableArrayList();
+    private final List<Word> sortedWords = new SortedList<>(words);
 
     public Wordle(){
         setStyle("-fx-border-width: 1px; -fx-border-color: black;");
@@ -37,11 +40,11 @@ public class Wordle extends Pane {
         getChildren().add(w.getNode());
     }
 
-    public void formatWords(List<String> highLightWords){
-//        words.forEach(w->w.getNode().setStyle("-fx-fill: black;"));
-//        words.stream()
-//            .filter(w->highLightWords.contains(w.getNode().getText()))
-//            .forEach(w->w.getNode().setStyle("-fx-fill: red;"));
+    public List<Word> formatWords(List<String> fadeOut){
+        List<Word> wordsToFade = words.stream()
+                .filter(w->!fadeOut.contains(w.getNode().getText()))
+                .collect(Collectors.toList());
+        return wordsToFade;
     }
     
     @Override
