@@ -75,7 +75,8 @@ public class TagTweets {
     private final List<String> stopList = new ArrayList<>(
             Arrays.asList("http", "https", "has", "have", "do", "for", "are", "the", "and",
                     "with", "here", "#devoxx", "active", "see", "next", "will", "any", "off", "there", "while", "just", "all", "from", "got", "think", "nice",
-                    "ask", "can", "you", "week", "some", "not", "didn", "isn", "per"));
+                    "ask", "can", "you", "week", "some", "not", "didn", "isn", "per", "how", "show", "out", "but", "last", "your", "one", "should",
+                    "now", "also", "done"));
 
     private final Pattern pattern = Pattern.compile("\\s+");
 
