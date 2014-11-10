@@ -5,11 +5,16 @@
  */
 package tweetwallfx.tagcloud;
 
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import twitter.CLogOut;
 import twitter.TwitterOAuth;
@@ -23,43 +28,48 @@ public class TagCloud extends Application {
 
     private Configuration conf;
     private CLogOut log;
-    private final String hashtag = "#Google";
+    private final String hashtag = "#devoxx";
     private TagTweets tweetsTask;
     
     @Override
     public void start(Stage primaryStage) {
         
-        StackPane root = new StackPane();
-        Scene scene = new Scene(root, 800, 600);
+        try {
+            AnchorPane root = FXMLLoader.<AnchorPane>load(this.getClass().getResource("TweetWallFX.fxml"));
+            BorderPane borderPane = (BorderPane) root.lookup("#displayArea");
+            Scene scene = new Scene(root, 800, 600);
             
-        /* TWITTER */
+            /* TWITTER */
 //        log=CLogOut.getInstance();
 //        log.getMessages().addListener((ov,s,s1)->System.out.println(s1));
-        
-        final Service service=new Service<Void>(){
-            @Override protected Task<Void> createTask() {                
-                Task<Void> task = new Task<Void>(){
-                    @Override protected Void call() throws Exception {
-                        conf = TwitterOAuth.getInstance().readOAuth();
-                        return null;
-                    }
-                };
-                return task;
-            }
-        };
-        
-        service.setOnSucceeded(e->{
-            if(!hashtag.isEmpty() && conf!=null){
-                tweetsTask= new TagTweets(conf, hashtag, root);
-                tweetsTask.start();
-            }
-        });
-        
-        primaryStage.setTitle("Tag Cloud Example!");
-        primaryStage.setScene(scene);
-        primaryStage.show();
-        
-        service.start();
+            
+            final Service service=new Service<Void>(){
+                @Override protected Task<Void> createTask() {   
+                    Task<Void> task = new Task<Void>(){
+                        @Override protected Void call() throws Exception {
+                            conf = TwitterOAuth.getInstance().readOAuth();
+                            return null;
+                        }
+                    };
+                    return task;
+                }
+            };
+            
+            service.setOnSucceeded(e->{
+                if(!hashtag.isEmpty() && conf!=null){
+                    tweetsTask= new TagTweets(conf, hashtag, borderPane);
+                    tweetsTask.start();
+                }
+            });
+            
+            primaryStage.setTitle("Tag Cloud Example!");
+            primaryStage.setScene(scene);
+            primaryStage.show();
+            primaryStage.setFullScreen(true);
+            service.start();
+        } catch (IOException ex) {
+            Logger.getLogger(TagCloud.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     @Override

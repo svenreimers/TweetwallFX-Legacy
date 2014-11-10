@@ -6,103 +6,43 @@
 package tweetwallfx.tagcloud;
 
 import java.util.List;
-import java.util.Random;
-import java.util.stream.Collectors;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.SortedList;
-import javafx.geometry.BoundingBox;
-import javafx.geometry.Bounds;
-import javafx.geometry.Point2D;
-import javafx.scene.layout.Pane;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
+import twitter4j.Status;
 
 /**
  *
  * @author sven
  */
-public class Wordle extends Pane {
+public class Wordle extends Control {
 
-    private final Random rand = new Random();
-    private final int dDeg = 10;
-    private final double dRadius = 5.0;
-    private final ObservableList<Word> words = FXCollections.<Word>observableArrayList();
-//    private final ObservableList<Word> fadeOutWords = FXCollections.<Word>observableArrayList();
-//    private final ObservableList<Text> fadeInWords = FXCollections.<Text>observableArrayList();
-    private final List<Word> sortedWords = new SortedList<>(words);
+    ObjectProperty<List<Word>> wordsProperty = new SimpleObjectProperty<>();
+    ObjectProperty<Status> statusProperty = new SimpleObjectProperty<>();
 
-    public Wordle(){
-        setStyle("-fx-border-width: 1px; -fx-border-color: black;");
+    public Wordle() {
+    }
+
+    public void setTweet(Status status) {
+        statusProperty.set(status);
+    }
+
+    public ObjectProperty<Status> statusProperty() {
+        return statusProperty;
     }
     
-    public void setWord(String word, double weight) {
-        Word w = new Word(word, weight);
-        words.add(w);
-        getChildren().add(w.getNode());
+    public void setWords(List<Word> words) {
+        wordsProperty.set(words);
     }
 
-    public List<Word> formatWords(List<String> fadeOut){
-        List<Word> wordsToFade = words.stream()
-                .filter(w->!fadeOut.contains(w.getNode().getText()))
-                .collect(Collectors.toList());
-        return wordsToFade;
+    public ObjectProperty<List<Word>> wordsProperty() {
+        return wordsProperty;
     }
-    
+
     @Override
-    protected void layoutChildren() {
-        for (int i = 1; i < sortedWords.size(); ++i) {
-            Word word = sortedWords.get(i);
-            Point2D center = new Point2D(0, 0);
-            double totalWeight = 0.0;
-            if (i != 0) {
-                for (int prev = 0; prev < i; ++prev) {
-                    Word wPrev = sortedWords.get(prev);
-                    center = center.add((wPrev.getWidth() / 2d) * wPrev.weight, (wPrev.getHeight() / 2d) * wPrev.weight);
-                    totalWeight += wPrev.weight;
-                }
-                center = center.multiply(1d / totalWeight);
-            }
-            boolean done = false;
-            double radius = 0.5 * Math.min(sortedWords.get(0).getWidth(), sortedWords.get(0).getHeight());
-            while (!done) {
-                int startDeg = rand.nextInt(360);
-                double prev_x = -1;
-                double prev_y = -1;
-                for (int deg = startDeg; deg < startDeg + 360; deg += dDeg) {
-//                        System.out.println("DEG: " + deg);
-                    double rad = ((double) deg / Math.PI) * 180.0;
-                    center = center.add(radius * Math.cos(rad), radius * Math.sin(rad));
-                    if (prev_x == center.getX() && prev_y == center.getY()) {
-                        continue;
-                    }
-                    prev_x = center.getX();
-                    prev_y = center.getY();
-                    Bounds mayBe = new BoundingBox(center.getX() - word.getWidth() / 2d, center.getY() - word.getHeight() / 2d, word.getWidth(), word.getHeight());
-                    boolean useable = true;
-                    for (int prev = 0; prev < i; ++prev) {
-//                            System.out.println("MayBe: " + mayBe + " ? " + mayBe.isEmpty());
-//                            System.out.println("intersects: " + prev + " " + words.get(prev).getBounds() + " ? " + words.get(prev).getBounds().isEmpty());
-                        if (mayBe.intersects(words.get(prev).getBounds())) {
-                            useable = false;
-                            break;
-                        }
-                    }
-                    if (useable) {
-                        done = true;
-                        word.setWordleCenter(center);
-//                            System.out.println("Done " + word + " " + word.getBounds());
-                        break;
-                    }
-                }
-                radius += this.dRadius;
-            }
-        }
-        Bounds ownBounds = getLayoutBounds();
-        double shiftXCenter = ownBounds.getWidth() / 2d;
-        double shiftYCenter = ownBounds.getHeight() / 2d;
-        words.forEach(word -> {
-            word.getNode().setLayoutX(word.getWordleCenter().getX() - word.getWidth() / 2d + shiftXCenter);
-            word.getNode().setLayoutY(word.getWordleCenter().getY() - word.getHeight() / 2d + shiftYCenter);
-        });
+    protected Skin<?> createDefaultSkin() {
+        return new WordleSkin(this);
     }
 
 }

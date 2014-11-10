@@ -189,7 +189,7 @@ public class TweetsToTori {
             final CountDownLatch latch = new CountDownLatch(1);
             // render the chart in an offscreen scene (scene is used to allow css processing) and snapshot it to an image.
             // the snapshot is done in runlater as it must occur on the javafx application thread.
-            final SimpleObjectProperty<BufferedImage> imageProperty = new SimpleObjectProperty();
+            final SimpleObjectProperty<BufferedImage> imageProperty = new SimpleObjectProperty<>();
             Platform.runLater(() -> {
                 Scene snapshotScene = new Scene(tweetContainer);
                 final SnapshotParameters params = new SnapshotParameters();
@@ -271,9 +271,9 @@ public class TweetsToTori {
     }
 
     private class SaveTweetsTask<Void> extends Task {
-        private final BlockingQueue<Parent>        tweets         = new ArrayBlockingQueue(5);
-        private final BlockingQueue<BufferedImage> bufferedImages = new ArrayBlockingQueue(5);
-        private final BlockingQueue<Image>         diffuseMaps    = new ArrayBlockingQueue(5);
+        private final BlockingQueue<Parent>        tweets         = new ArrayBlockingQueue<>(5);
+        private final BlockingQueue<BufferedImage> bufferedImages = new ArrayBlockingQueue<>(5);
+        private final BlockingQueue<Image>         diffuseMaps    = new ArrayBlockingQueue<>(5);
         private final ExecutorService    tweetsCreationExecutor   = createExecutor("CreateTweets");
         private final ExecutorService    tweetsSnapshotExecutor   = createExecutor("TakeSnapshots");
         private final ExecutorService    imagesExportExecutor     = createExecutor("ExportImages");
