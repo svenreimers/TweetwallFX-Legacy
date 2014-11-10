@@ -5,6 +5,7 @@
  */
 package tweetwallfx.tagcloud;
 
+import java.util.Objects;
 import javafx.geometry.Point2D;
 
 /**
@@ -37,5 +38,27 @@ class Word implements Comparable<Word> {
     public String toString() {
         return "Word{" + "text=" + text + ", weight=" + weight + '}';
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.text);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Word other = (Word) obj;
+        if (!Objects.equals(this.text, other.text)) {
+            return false;
+        }
+        return true;
+    }
+    
+
     
 }

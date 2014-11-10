@@ -16,7 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -76,7 +75,7 @@ public class TagTweets {
             Arrays.asList("http", "https", "has", "have", "do", "for", "are", "the", "and",
                     "with", "here", "#devoxx", "active", "see", "next", "will", "any", "off", "there", "while", "just", "all", "from", "got", "think", "nice",
                     "ask", "can", "you", "week", "some", "not", "didn", "isn", "per", "how", "show", "out", "but", "last", "your", "one", "should",
-                    "now", "also", "done"));
+                    "now", "also", "done", "will", "become", "did", "what", "when", "let", "that", "this", "always", "where", "our"));
 
     private final Pattern pattern = Pattern.compile("\\s+");
 
@@ -436,7 +435,7 @@ public class TagTweets {
     private void buildTagCloud(List<Status> tweets){
         Stream<String> stringStream = tweets.stream()
 //                .map(t -> t.getText());
-                .map(t -> t.getText().replaceAll("[.,!?]((\\s+)|($))", " ").replaceAll("http:.*((\\s+)|($))", " ").replaceAll("'"," "));
+                .map(t -> t.getText().replaceAll("[.,!?]((\\s+)|($))", " ").replaceAll("http:.*((\\s+)|($))", " ").replaceAll("['\"]"," "));
         tree = stringStream
                 .flatMap(c -> pattern.splitAsStream(c))
                 .filter(l -> l.length() > 2)
@@ -447,13 +446,15 @@ public class TagTweets {
     }
 
     private void createWordle() {
-        wordle = new Wordle();
+        if (null == wordle) {
+            wordle = new Wordle();
+            hWordle.getChildren().setAll(wordle);
+            wordle.prefWidthProperty().bind(hWordle.widthProperty());
+            wordle.prefHeightProperty().bind(hWordle.heightProperty());
+        }
         wordle.setWords(tree.entrySet().stream()
                 .sorted(comparator.reversed())
                 .limit(NUM_MAX_WORDS).map(entry -> new Word(entry.getKey(), entry.getValue())).collect(Collectors.toList()));
-        wordle.prefWidthProperty().bind(hWordle.widthProperty());
-        wordle.prefHeightProperty().bind(hWordle.heightProperty());
-        hWordle.getChildren().setAll(wordle);
     }
 
 }
