@@ -19,10 +19,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
-import javafx.animation.ScaleTransition;
 import javafx.animation.SequentialTransition;
 import javafx.animation.Transition;
-import javafx.animation.TranslateTransition;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
@@ -33,9 +31,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.scene.transform.Translate;
 import javafx.util.Duration;
-import tweetwallfx.tagcloud.Wordle.LayoutMode;
 import twitter.TweetInfo;
 
 /**
@@ -62,12 +58,11 @@ public class WordleSkin extends SkinBase<Wordle> {
         super(wordle);
 
         pane = new Pane();
-        pane.setStyle("-fx-border-width: 1px; -fx-border-color: black;");
+//        pane.setStyle("-fx-border-width: 1px; -fx-border-color: black;");
         this.getChildren().add(pane);
         updateCloud();
 
         wordle.wordsProperty.addListener((obs, oldValue, newValue) -> {
-            System.out.println("Words Update: " + newValue.size());
             switch (wordle.layoutModeProperty.get()) {
                 case TWEET:
                     break;
@@ -156,25 +151,21 @@ public class WordleSkin extends SkinBase<Wordle> {
         List<TweetWord> tweetLayout = recalcTweetLayout(getSkinnable().tweetInfoProperty.get());
 
         ParallelTransition fadeOuts = new ParallelTransition();
-        ParallelTransition grows = new ParallelTransition();
         ParallelTransition moves = new ParallelTransition();
         ParallelTransition fadeIns = new ParallelTransition();
-        SequentialTransition morph = new SequentialTransition(fadeOuts, grows, moves, fadeIns);
+        SequentialTransition morph = new SequentialTransition(fadeOuts, moves, fadeIns);
 
         tweetLayout.stream().forEach(tweetWord -> {
             Word word = new Word(tweetWord.text.trim(), -2);
-//            System.out.println("Word: " + word.text + " in " + word2TextMap.keySet());
             if (word2TextMap.containsKey(word)) {
-//                System.out.println("MOV TWL: " + word.text);
                 Text textNode = word2TextMap.remove(word);
                 tweetWordList.add(new TweetWordNode(tweetWord, textNode));
-                // fontSizeAdaption(textNode, -1);
-                
+
                 FontSizeTransition ft = new FontSizeTransition(Duration.seconds(1.5), textNode);
                 ft.setFromSize(textNode.getFont().getSize());
                 ft.setToSize(getFontSize(-1));
-                grows.getChildren().add(ft);
-                
+                moves.getChildren().add(ft);
+
                 Bounds bounds = tweetLayout.stream().filter(tw -> tw.text.trim().equals(word.text)).findFirst().get().bounds;
 
                 LocationTransition lt = new LocationTransition(Duration.seconds(1.5), textNode);
@@ -183,13 +174,8 @@ public class WordleSkin extends SkinBase<Wordle> {
                 lt.setToX(bounds.getMinX());
                 lt.setToY(layoutBounds.getHeight() - bounds.getMaxY());
                 moves.getChildren().add(lt);
-//                TranslateTransition tt = new TranslateTransition(Duration.seconds(1.5), textNode);
-//                tt.setToX(-pane.getWidth()/2d);
-//                tt.setToY(-pane.getHeight()/2d);
-//                moves.getChildren().add(tt);
             } else {
                 Text textNode = createTextNode(word);
-//                System.out.println("NEW TWL: " + word.text);
 
                 fontSizeAdaption(textNode, -1);
                 tweetWordList.add(new TweetWordNode(tweetWord, textNode));
@@ -208,7 +194,6 @@ public class WordleSkin extends SkinBase<Wordle> {
 
         // kill the remaining words from the cloud
         word2TextMap.entrySet().forEach(entry -> {
-//            System.out.println("DEL TWL: " + entry.getKey().text);
             Text textNode = entry.getValue();
             FadeTransition ft = new FadeTransition(Duration.seconds(1.5), textNode);
             ft.setToValue(0);
@@ -229,7 +214,6 @@ public class WordleSkin extends SkinBase<Wordle> {
         }
 
         limitedWords = sortedWords.stream().limit(MAX_CLOUD_TAGS).collect(Collectors.toList());
-//        limitedWords.addAll(tweetWords);
         limitedWords.sort(Comparator.reverseOrder());
 
         max = limitedWords.get(0).weight;
@@ -239,48 +223,39 @@ public class WordleSkin extends SkinBase<Wordle> {
 
         ParallelTransition fadeOuts = new ParallelTransition();
         ParallelTransition moves = new ParallelTransition();
-        ParallelTransition shrinks = new ParallelTransition();
         ParallelTransition fadeIns = new ParallelTransition();
-        SequentialTransition morph = new SequentialTransition(fadeOuts, moves, shrinks, fadeIns);
-        
+        SequentialTransition morph = new SequentialTransition(fadeOuts, moves, fadeIns);
+
         Bounds layoutBounds = pane.getLayoutBounds();
-        
+
         boundsMap.entrySet().stream().forEach(entry -> {
             Word word = entry.getKey();
             Bounds bounds = entry.getValue();
             Optional<TweetWordNode> optionalTweetWord = tweetWordList.stream().filter(tweetWord -> tweetWord.tweetWord.text.trim().equals(word.text)).findFirst();
             if (optionalTweetWord.isPresent()) {
-                System.out.println("MOV TCL: " + entry.getKey().text);
                 boolean removed = tweetWordList.remove(optionalTweetWord.get());
-                System.out.println("Removed: " + optionalTweetWord.get().tweetWord.text + " " + removed);
                 Text textNode = optionalTweetWord.get().textNode;
 
                 word2TextMap.put(word, textNode);
                 LocationTransition lt = new LocationTransition(Duration.seconds(1.5), textNode);
 
-                System.out.println("Move Word: " + word.text + " " + bounds);
-                
                 lt.setFromX(textNode.getLayoutX());
                 lt.setFromY(textNode.getLayoutY());
                 lt.setToX(bounds.getMinX() + layoutBounds.getWidth() / 2d);
                 lt.setToY(bounds.getMinY() + layoutBounds.getHeight() / 2d + bounds.getHeight() / 2d);
                 moves.getChildren().add(lt);
 
-                
                 FontSizeTransition ft = new FontSizeTransition(Duration.seconds(1.5), textNode);
                 ft.setFromSize(textNode.getFont().getSize());
                 ft.setToSize(getFontSize(word.weight));
-                shrinks.getChildren().add(ft);
-                
-                
+                moves.getChildren().add(ft);
+
             } else {
                 Text textNode = createTextNode(word);
-                System.out.println("NEW TCL: " + entry.getKey().text);
 
                 word2TextMap.put(word, textNode);
-                System.out.println("Word: " + word.text + " " + bounds);
                 textNode.setLayoutX(bounds.getMinX() + layoutBounds.getWidth() / 2d);
-                textNode.setLayoutY(bounds.getMinY() + layoutBounds.getHeight() /2d + bounds.getHeight() / 2d);
+                textNode.setLayoutY(bounds.getMinY() + layoutBounds.getHeight() / 2d + bounds.getHeight() / 2d);
                 textNode.setOpacity(0);
                 pane.getChildren().add(textNode);
                 FadeTransition ft = new FadeTransition(Duration.seconds(1.5), textNode);
@@ -290,7 +265,6 @@ public class WordleSkin extends SkinBase<Wordle> {
         });
 
         tweetWordList.forEach(tweetWord -> {
-            System.out.println("DEL TCL: " + tweetWord.tweetWord.text);            
             FadeTransition ft = new FadeTransition(Duration.seconds(1.5), tweetWord.textNode);
             ft.setToValue(0);
             fadeOuts.getChildren().add(ft);
@@ -302,10 +276,9 @@ public class WordleSkin extends SkinBase<Wordle> {
         tweetWordList.clear();
 
         morph.play();
-   }
+    }
 
     private void updateCloud() {
-        System.out.println("Update Cloud");
 //        pane.setStyle("-fx-border-width: 1px; -fx-border-color: red;");
         List<Word> sortedWords = new ArrayList<>(getSkinnable().wordsProperty().getValue());
         if (sortedWords.isEmpty()) {
@@ -313,17 +286,10 @@ public class WordleSkin extends SkinBase<Wordle> {
         }
 
         limitedWords = sortedWords.stream().limit(MAX_CLOUD_TAGS).collect(Collectors.toList());
-//        System.out.println("Limited words: " + limitedWords.size());
-//        System.out.println("limitedWords: " + limitedWords);
-//        limitedWords.addAll(tweetWords);
-//        System.out.println("Limited words (incl. tweet words): " + limitedWords.size());
-//        System.out.println("tweetWords: " + tweetWords);
         limitedWords.sort(Comparator.reverseOrder());
 
         max = limitedWords.get(0).weight;
         min = limitedWords.stream().filter(w -> w.weight > 0).min(Comparator.naturalOrder()).get().weight;
-
-//        System.out.println("Max Weight: " + max + ", min Weight: " + min);
 
         Map<Word, Bounds> boundsMap = recalcTagLayout(limitedWords);
         Bounds layoutBounds = pane.getLayoutBounds();
@@ -331,10 +297,8 @@ public class WordleSkin extends SkinBase<Wordle> {
         List<Word> unusedWords = word2TextMap.keySet().stream().filter(word -> !boundsMap.containsKey(word)).collect(Collectors.toList());
         SequentialTransition morph = new SequentialTransition();
 
-
         ParallelTransition fadeOuts = new ParallelTransition();
         unusedWords.forEach(word -> {
-//            System.out.println("Fade out: " + word.text);
             Text textNode = word2TextMap.remove(word);
 
             FadeTransition ft = new FadeTransition(Duration.seconds(1.5), textNode);
@@ -352,7 +316,6 @@ public class WordleSkin extends SkinBase<Wordle> {
 
         existingWords.forEach(word -> {
 
-//            System.out.println("Move word: " + word.text);
             Text textNode = word2TextMap.get(word);
             fontSizeAdaption(textNode, word.weight);
             Bounds bounds = boundsMap.get(word);
@@ -361,7 +324,7 @@ public class WordleSkin extends SkinBase<Wordle> {
             lt.setFromX(textNode.getLayoutX());
             lt.setFromY(textNode.getLayoutY());
             lt.setToX(bounds.getMinX() + layoutBounds.getWidth() / 2d);
-            lt.setToY(bounds.getMinY() + + layoutBounds.getHeight() / 2d + bounds.getHeight() / 2d); 
+            lt.setToY(bounds.getMinY() + +layoutBounds.getHeight() / 2d + bounds.getHeight() / 2d);
             moves.getChildren().add(lt);
         });
 
@@ -372,12 +335,11 @@ public class WordleSkin extends SkinBase<Wordle> {
 
         newWords.forEach(word -> {
             Text textNode = createTextNode(word);
-//            System.out.println("new word: " + word.text);
             word2TextMap.put(word, textNode);
 
             Bounds bounds = boundsMap.get(word);
             textNode.setLayoutX(bounds.getMinX() + layoutBounds.getWidth() / 2d);
-            textNode.setLayoutY(bounds.getMinY()  + layoutBounds.getHeight() / 2d + bounds.getHeight() / 2d);
+            textNode.setLayoutY(bounds.getMinY() + layoutBounds.getHeight() / 2d + bounds.getHeight() / 2d);
             textNode.setOpacity(0);
             pane.getChildren().add(textNode);
             FadeTransition ft = new FadeTransition(Duration.seconds(1.5), textNode);
@@ -386,35 +348,13 @@ public class WordleSkin extends SkinBase<Wordle> {
         });
         morph.getChildren().add(fadeIns);
         morph.play();
-//        reLayout(true);
     }
 
     private static final int MAX_CLOUD_TAGS = 40;
 
-//    private void reLayout(boolean ignoreMode) {
-//        if (ignoreMode) {
-//            reLayout();
-//        } else if (LayoutMode.WORDLE == getSkinnable().layoutModeProperty.get()) {
-//            reLayout();
-//        }
-//    }
-//
-//    private void reLayout() {
-//        System.out.println("Relayouting");
-//        Bounds layoutBounds = pane.getLayoutBounds();
-//        word2TextMap.entrySet().forEach(entry -> {
-//            Text textNode = entry.getValue();
-//            if (null != textNode) {
-//                textNode.getTransforms().clear();
-//                textNode.getTransforms().add(new Translate(layoutBounds.getWidth() / 2d, layoutBounds.getHeight() / 2d));
-//            }
-//        });
-//        pane.layout();
-//    }
-
     private final Font defaultFont = Font.font("Andalus", FontWeight.BOLD, 18);
 
-    private  double getFontSize(double weight) {
+    private double getFontSize(double weight) {
         // maxFont = 48
         // minFont = 18
 
@@ -422,7 +362,7 @@ public class WordleSkin extends SkinBase<Wordle> {
         if (weight == -1) {
             size = 24;
         } else if (weight == -2) {
-            size = 18;            
+            size = 18;
         } else {
             // linear
             //y = a+bx
@@ -433,10 +373,9 @@ public class WordleSkin extends SkinBase<Wordle> {
             double b = defaultFont.getSize() - a * Math.log(min);
             size = a * Math.log(weight) + b;
         }
-//        System.out.println(word.text + " " + word.weight + " " + " Font: " + size);
         return size;
     }
-    
+
     private void fontSizeAdaption(Text text, double weight) {
         text.setFont(Font.font(defaultFont.getFamily(), getFontSize(weight)));
     }
@@ -451,7 +390,6 @@ public class WordleSkin extends SkinBase<Wordle> {
     private final Pattern pattern = Pattern.compile("\\s+");
 
     private List<TweetWord> recalcTweetLayout(TweetInfo info) {
-        System.out.println("TweetLayouting");
         TextFlow flow = new TextFlow();
         flow.setMaxWidth(300);
         pattern.splitAsStream(info.getText())
@@ -572,7 +510,7 @@ public class WordleSkin extends SkinBase<Wordle> {
         }
 
     }
-    
+
     private static class FontSizeTransition extends Transition {
 
         private final Text node;
@@ -600,7 +538,6 @@ public class WordleSkin extends SkinBase<Wordle> {
         }
 
     }
-    
 
     private static class TweetWord {
 

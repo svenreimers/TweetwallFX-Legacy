@@ -272,7 +272,7 @@ public class TagTweets {
                     Thread.sleep(8000);
                     Platform.runLater(() -> wordle.setLayoutMode(Wordle.LayoutMode.WORDLE));
                     Thread.sleep(5000);
-                    removeTweetFromCloud(tweetWords);
+//                    removeTweetFromCloud(tweetWords);
                     Platform.runLater(()
                             -> wordle.setWords(tree.entrySet().stream()
                                     .sorted(comparator.reversed())
