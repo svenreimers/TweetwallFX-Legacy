@@ -28,7 +28,7 @@ public class TagCloud extends Application {
 
     private Configuration conf;
     private CLogOut log;
-    private final String hashtag = "#devoxx";
+    private final String hashtag = "#google";
     private TagTweets tweetsTask;
     
     @Override
@@ -62,7 +62,7 @@ public class TagCloud extends Application {
                 }
             });
             
-            primaryStage.setTitle("Tag Cloud Example!");
+            primaryStage.setTitle("The JavvaFX Tweetwall for Devoox!");
             primaryStage.setScene(scene);
             primaryStage.show();
             primaryStage.setFullScreen(true);

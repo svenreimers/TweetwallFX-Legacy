@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -69,7 +70,7 @@ import twitter4j.conf.Configuration;
 public class TagTweets {
 
     private final static int MIN_WEIGHT = 4;
-    private final static int NUM_MAX_WORDS = 50;
+    private final static int NUM_MAX_WORDS = 30;
 
     private final List<String> stopList = new ArrayList<>(
             Arrays.asList("http", "https", "has", "have", "do", "for", "are", "the", "and",
@@ -213,17 +214,18 @@ public class TagTweets {
                     .filter(w -> !stopList.contains(w))
                     .forEach(w -> tree.put(w, (tree.containsKey(w) ? tree.get(w) : 0) + 1l));
 
-            // check if there is any word in the tags in the wall 
-            if (tree.entrySet().stream()
-                    .sorted(comparator.reversed())
-                    .limit(NUM_MAX_WORDS)
-                    .anyMatch(entry -> collect.contains(entry.getKey()))) {
+//            // check if there is any word in the tags in the wall 
+//            if (tree.entrySet().stream()
+//                    .sorted(comparator.reversed())
+//                    .limit(NUM_MAX_WORDS)
+//                    .anyMatch(entry -> collect.contains(entry.getKey()))) {
+//
+//                // return the tweet
+//                return info;
+//            }
+            return info;
 
-                // return the tweet
-                return info;
-            }
-
-            return null;
+//            return null;
         }
     }
 
@@ -243,10 +245,49 @@ public class TagTweets {
                 if (isCancelled()) {
                     break;
                 }
-                parents.put(createTweetInfoBox(tweets.take()));
+//                parents.put(createTweetInfoBox(tweets.take()));
+                TweetInfo tweet = tweets.take();
+                Platform.runLater(() -> wordle.setTweet(tweet));
+                Set<Word> tweetWords = addTweetToCloud(tweet);
+                Thread.sleep(3000);
+                Platform.runLater(() -> wordle.setLayoutMode(Wordle.LayoutMode.TWEET));
+                Thread.sleep(8000);
+                Platform.runLater(() -> wordle.setLayoutMode(Wordle.LayoutMode.WORDLE));
+                Thread.sleep(3000);
+                removeTweetFromCloud(tweetWords);
+                Platform.runLater(()
+                        -> wordle.setWords(tree.entrySet().stream()
+                                .sorted(comparator.reversed())
+                                .limit(NUM_MAX_WORDS).map(entry -> new Word(entry.getKey(), entry.getValue())).collect(Collectors.toList()))
+                );
+                Thread.sleep(5000);
             }
             return null;
         }
+        
+        private void removeTweetFromCloud(Set<Word> tweetWords) {
+            System.out.println("Remove tweet from cloud");
+            List<Word> words = new ArrayList<>(wordle.wordsProperty.get());
+            words.removeAll(tweetWords);
+            Platform.runLater(() -> wordle.wordsProperty.set(words));
+        }
+        
+        private Set<Word> addTweetToCloud(TweetInfo tweetInfo) {
+            System.out.println("Add tweet to cloud");
+            String text = tweetInfo.getText();
+            Set<Word> tweetWords = pattern.splitAsStream(text)
+                    .filter(l -> l.length() > 2)
+                    .filter(l -> !l.startsWith("@"))
+                    .filter(l -> !l.startsWith("http:"))
+                    .filter(l -> !l.startsWith("https:"))
+                    .filter(l -> !stopList.contains(l)).map(l -> new Word(l, -2)).collect(Collectors.toSet());
+            List<Word> words = new ArrayList<>(wordle.wordsProperty.get());
+            tweetWords.removeAll(words);
+            words.addAll(tweetWords);
+            Platform.runLater(() -> wordle.wordsProperty.set(words));
+            return tweetWords;
+        }
+
 
         private Parent createTweetInfoBox(TweetInfo info) {
 
@@ -432,10 +473,10 @@ public class TagTweets {
         return Executors.newSingleThreadExecutor(factory);
     }
 
-    private void buildTagCloud(List<Status> tweets){
+    private void buildTagCloud(List<Status> tweets) {
         Stream<String> stringStream = tweets.stream()
-//                .map(t -> t.getText());
-                .map(t -> t.getText().replaceAll("[.,!?]((\\s+)|($))", " ").replaceAll("http:.*((\\s+)|($))", " ").replaceAll("['\"]"," "));
+                //                .map(t -> t.getText());
+                .map(t -> t.getText().replaceAll("[.,!?:´`']((\\s+)|($))", " ").replaceAll("http[s]?:.*((\\s+)|($))", " ").replaceAll("['\"]", " "));
         tree = stringStream
                 .flatMap(c -> pattern.splitAsStream(c))
                 .filter(l -> l.length() > 2)
@@ -452,9 +493,11 @@ public class TagTweets {
             wordle.prefWidthProperty().bind(hWordle.widthProperty());
             wordle.prefHeightProperty().bind(hWordle.heightProperty());
         }
-        wordle.setWords(tree.entrySet().stream()
-                .sorted(comparator.reversed())
-                .limit(NUM_MAX_WORDS).map(entry -> new Word(entry.getKey(), entry.getValue())).collect(Collectors.toList()));
+        Platform.runLater(()
+                -> wordle.setWords(tree.entrySet().stream()
+                        .sorted(comparator.reversed())
+                        .limit(NUM_MAX_WORDS).map(entry -> new Word(entry.getKey(), entry.getValue())).collect(Collectors.toList()))
+        );
     }
 
 }

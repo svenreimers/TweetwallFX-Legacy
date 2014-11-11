@@ -5,12 +5,13 @@
  */
 package tweetwallfx.tagcloud;
 
+import java.util.ArrayList;
 import java.util.List;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
-import twitter4j.Status;
+import twitter.TweetInfo;
 
 /**
  *
@@ -18,18 +19,23 @@ import twitter4j.Status;
  */
 public class Wordle extends Control {
 
-    ObjectProperty<List<Word>> wordsProperty = new SimpleObjectProperty<>();
-    ObjectProperty<Status> statusProperty = new SimpleObjectProperty<>();
+    enum LayoutMode { WORDLE, TWEET }
+    
+    ObjectProperty<List<Word>> wordsProperty = new SimpleObjectProperty<>(new ArrayList<>());
+    ObjectProperty<TweetInfo> tweetInfoProperty = new SimpleObjectProperty<>();
+
+    ObjectProperty<LayoutMode> layoutModeProperty = new SimpleObjectProperty<>(LayoutMode.WORDLE);
 
     public Wordle() {
     }
 
-    public void setTweet(Status status) {
-        statusProperty.set(status);
-    }
-
-    public ObjectProperty<Status> statusProperty() {
-        return statusProperty;
+    public void setTweet(TweetInfo status) {
+        System.out.println("new status line: " + status);
+        tweetInfoProperty.set(status);
+    }    
+    
+    public ObjectProperty<TweetInfo> tweetInfoProperty() {
+        return tweetInfoProperty;
     }
     
     public void setWords(List<Word> words) {
@@ -40,6 +46,14 @@ public class Wordle extends Control {
         return wordsProperty;
     }
 
+    public void setLayoutMode(LayoutMode layoutMode) {
+        layoutModeProperty.set(layoutMode);
+    }
+
+    public ObjectProperty<LayoutMode> layoutModeProperty() {
+        return layoutModeProperty;
+    }
+    
     @Override
     protected Skin<?> createDefaultSkin() {
         return new WordleSkin(this);

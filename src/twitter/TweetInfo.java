@@ -36,4 +36,10 @@ public class TweetInfo {
     public Date getDate(){
         return status.getCreatedAt();
     }
+
+    @Override
+    public String toString() {
+        return "TweetInfo{" + "status=" + status + '}';
+    }
+    
 }
