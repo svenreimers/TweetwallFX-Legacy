@@ -1,6 +1,7 @@
 package twitter;
 
 import java.util.Date;
+import twitter4j.MediaEntity;
 import twitter4j.Status;
 
 /**
@@ -37,6 +38,10 @@ public class TweetInfo {
         return status.getCreatedAt();
     }
 
+    public MediaEntity[] getMediaEntities() {
+        return status.getMediaEntities();
+    }
+    
     @Override
     public String toString() {
         return "TweetInfo{" + "status=" + status + '}';

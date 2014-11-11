@@ -247,7 +247,8 @@ public class TagTweets {
                 Query query = new Query(searchText);
                 query.setCount(10);
                 QueryResult result = twitter.search(query);
-                Optional<Status> status = result.getTweets().stream().skip((long) Math.random() * 10).findFirst();
+                long skipping = (long) (Math.random() * 10);
+                Optional<Status> status = result.getTweets().stream().skip(skipping).findFirst();
                 if (status.isPresent()) {
                     tweet = new TweetInfo(status.get());
                 }

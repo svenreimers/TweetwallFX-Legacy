@@ -66,6 +66,7 @@ public class WordleSkin extends SkinBase<Wordle> {
     private Set<Word> tweetWords = Collections.emptySet();
     private HBox hbox;
     private Point2D lowerLeft;
+    private HBox mediaBox;
 
     public WordleSkin(Wordle wordle) {
         super(wordle);
@@ -299,6 +300,33 @@ public class WordleSkin extends SkinBase<Wordle> {
         hbox.setAlignment(Pos.CENTER);
         pane.getChildren().add(hbox);
 
+        if(tweetInfo.getMediaEntities().length > 0) {
+//            System.out.println("Media detected: " + tweetInfo.getText() + " " + Arrays.toString(tweetInfo.getMediaEntities()));
+            mediaBox = new HBox();
+            hImage.setPadding(new Insets(10));
+            Image mediaImage = new Image(tweetInfo.getMediaEntities()[0].getMediaURL());
+            ImageView mediaView = new ImageView(mediaImage);
+            mediaView.setPreserveRatio(true);
+            mediaView.setCache(true);
+            mediaView.setSmooth(true);
+//            Rectangle clip = new Rectangle(64, 64);
+//            clip.setArcWidth(10);
+//            clip.setArcHeight(10);
+//            imageView.setClip(clip);
+            mediaBox.getChildren().add(mediaView);
+            mediaBox.setOpacity(0);
+            mediaBox.setLayoutX(layoutBounds.getWidth()/2d);
+            mediaBox.setLayoutY(lowerLeft.getY() + 100);
+            mediaBox.setMaxSize(layoutBounds.getWidth()/2d, layoutBounds.getHeight()-50);
+            mediaView.setFitWidth(mediaBox.getWidth()-10);
+            mediaView.setFitHeight(mediaBox.getHeight()-10);
+            // add fade in for image and meta data
+            FadeTransition ft = new FadeTransition(Duration.seconds(1.5), mediaBox);
+            ft.setToValue(1);
+            fadeIns.getChildren().add(ft);  
+            pane.getChildren().add(mediaBox);
+        }        
+        
         // add fade in for image and meta data
         FadeTransition ft = new FadeTransition(Duration.seconds(1.5), hbox);
         ft.setToValue(1);
@@ -382,6 +410,14 @@ public class WordleSkin extends SkinBase<Wordle> {
             fadeOuts.getChildren().add(ft);
             ft.setOnFinished(event -> {
                 pane.getChildren().remove(hbox);
+            });
+        }
+        if (null != mediaBox) {
+            FadeTransition ft = new FadeTransition(Duration.seconds(1.5), mediaBox);
+            ft.setToValue(0);
+            fadeOuts.getChildren().add(ft);
+            ft.setOnFinished(event -> {
+                pane.getChildren().remove(mediaBox);
             });
         }
 
