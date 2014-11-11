@@ -27,6 +27,7 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -273,27 +274,29 @@ public class WordleSkin extends SkinBase<Wordle> {
 
         HBox hImage = new HBox();
         hImage.setPadding(new Insets(10));
-        Image image = new Image(tweetInfo.getImageURL(), 48, 48, true, false);
+        Image image = new Image(tweetInfo.getImageURL(), 64, 64, true, false);
         ImageView imageView = new ImageView(image);
-        Rectangle clip = new Rectangle(48, 48);
+        Rectangle clip = new Rectangle(64, 64);
         clip.setArcWidth(10);
         clip.setArcHeight(10);
         imageView.setClip(clip);
         hImage.getChildren().add(imageView);
 
-        HBox hName = new HBox(20);
+//        HBox hName = new HBox(20);
         Label name = new Label(tweetInfo.getName());
-        name.setStyle("-fx-font: 24px \"Andalus\"; -fx-text-fill: #292F33; -fx-font-weight: bold;");
+        name.setStyle("-fx-font: 36px \"Calibri\"; -fx-text-fill: #e1ecee; -fx-font-weight: bold;");
         DateFormat df = new SimpleDateFormat("HH:mm:ss");
         Label handle = new Label("@" + tweetInfo.getHandle() + " · " + df.format(tweetInfo.getDate()));
-        handle.setStyle("-fx-font: 22px \"Andalus\"; -fx-text-fill: #8899A6;");
-        hName.getChildren().addAll(name, handle);
+        handle.setStyle("-fx-font: 28px \"Calibri\"; -fx-text-fill: #8899A6;");
+//        hName.getChildren().addAll(name, handle);
+//        hName.setAlignment(Pos.BOTTOM_CENTER);
 
-        VBox vbox = new VBox(10);
-        vbox.getChildren().addAll(hName);
-        hbox.getChildren().addAll(hImage, vbox);
+//        VBox vbox = new VBox(10);
+//        vbox.getChildren().addAll(hName);
+        hbox.getChildren().addAll(hImage, name, handle);
 
         hbox.setOpacity(0);
+        hbox.setAlignment(Pos.CENTER);
         pane.getChildren().add(hbox);
 
         // add fade in for image and meta data
@@ -457,9 +460,9 @@ public class WordleSkin extends SkinBase<Wordle> {
         morph.play();
     }
 
-    private static final int MAX_CLOUD_TAGS = 40;
+    private static final int MAX_CLOUD_TAGS = 50;
 
-    private final Font defaultFont = Font.font("Andalus", FontWeight.BOLD, 18);
+    private final Font defaultFont = Font.font("Calibri", FontWeight.BOLD, MINIMUM_FONT_SIZE);
 
     private double getFontSize(double weight) {
         // maxFont = 48
@@ -469,14 +472,14 @@ public class WordleSkin extends SkinBase<Wordle> {
         if (weight == -1) {
             size = TWEET_FONT_SIZE;
         } else if (weight == -2) {
-            size = 18;
+            size = MINIMUM_FONT_SIZE -10;
         } else {
             // linear
             //y = a+bx
 //        double size = defaultFont.getSize() + ((48-defaultFont.getSize())/(max-min)) * word.weight;
             // logarithmic
             // y = a * Math.ln(x) + b
-            double a = (defaultFont.getSize() - 48) / (Math.log(min / max));
+            double a = (defaultFont.getSize() - MAX_FONT_SIZE) / (Math.log(min / max));
             double b = defaultFont.getSize() - a * Math.log(min);
             size = a * Math.log(weight) + b;
         }
@@ -510,7 +513,10 @@ public class WordleSkin extends SkinBase<Wordle> {
         flow.requestLayout();
         return flow.getChildren().stream().map(node -> new TweetWord(node.getBoundsInParent(), ((Text) node).getText())).collect(Collectors.toList());
     }
-    private static final int TWEET_FONT_SIZE = 36;
+    private static final int TWEET_FONT_SIZE = 72;
+    private static final int MINIMUM_FONT_SIZE = 36;
+    private static final int MAX_FONT_SIZE = 72;
+
 
     private Map<Word, Bounds> recalcTagLayout(List<Word> words) {
         List<Bounds> boundsList = new ArrayList<>();

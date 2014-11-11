@@ -71,7 +71,7 @@ import twitter4j.conf.Configuration;
 public class TagTweets {
 
     private final static int MIN_WEIGHT = 4;
-    private final static int NUM_MAX_WORDS = 30;
+    private final static int NUM_MAX_WORDS = 40;
 
     private final List<String> stopList = new ArrayList<>(
             Arrays.asList("http", "https", "has", "have", "do", "for", "are", "the", "and",
