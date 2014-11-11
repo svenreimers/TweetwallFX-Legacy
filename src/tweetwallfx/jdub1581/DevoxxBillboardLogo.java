@@ -29,7 +29,7 @@ import org.fxyz.extras.BillboardBehavior;
 public class DevoxxBillboardLogo extends MeshView implements BillboardBehavior<DevoxxBillboardLogo>{
 
     private final PhongMaterial mat = new PhongMaterial();
-    private final Image image = new Image(getClass().getResourceAsStream("devoxx.png"));    
+    private final Image image = new Image(getClass().getResourceAsStream("../tagcloud/devoxx.jpg"));    
     private final FXTimer updateThread = new FXTimer();
     private Camera otherNode;
 
@@ -57,9 +57,9 @@ public class DevoxxBillboardLogo extends MeshView implements BillboardBehavior<D
             @Override
             public void changed(ObservableValue<? extends Scene> observable, Scene oldValue, Scene newValue) {
                 if(newValue != null){
-                    otherNode = getScene().getCamera();
-                    startBillboardBehavior();
-                    sceneProperty().removeListener(this);
+//                    otherNode = getScene().getCamera();
+//                    startBillboardBehavior();
+//                    sceneProperty().removeListener(this);
                 }
             }
         });
@@ -87,7 +87,7 @@ public class DevoxxBillboardLogo extends MeshView implements BillboardBehavior<D
         return animated;
     }
     //==========================================================================
-    private final FloatProperty prefWidth = new SimpleFloatProperty(4200){
+    private final FloatProperty prefWidth = new SimpleFloatProperty(1920){
         
         @Override
         protected void invalidated() {
@@ -108,7 +108,7 @@ public class DevoxxBillboardLogo extends MeshView implements BillboardBehavior<D
         return prefWidth;
     }
     //==========================================================================
-    private final FloatProperty prefHeight = new SimpleFloatProperty(2000){
+    private final FloatProperty prefHeight = new SimpleFloatProperty(1080){
         
         @Override
         protected void invalidated() {
