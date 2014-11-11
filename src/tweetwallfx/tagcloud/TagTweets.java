@@ -292,7 +292,7 @@ public class TagTweets {
         }
 
         private Set<Word> addTweetToCloud(TweetInfo tweetInfo) {
-            System.out.println("Add tweet to cloud");
+//            System.out.println("Add tweet to cloud");
             String text = tweetInfo.getText();
             Set<Word> tweetWords = pattern.splitAsStream(text)
                     .filter(l -> l.length() > 2)

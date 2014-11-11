@@ -28,7 +28,7 @@ public class TagCloud extends Application {
 
     private Configuration conf;
     private CLogOut log;
-    private final String hashtag = "#google";
+    private final String hashtag = "#devoxx";
     private TagTweets tweetsTask;
     
     @Override

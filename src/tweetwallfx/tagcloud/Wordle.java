@@ -30,7 +30,6 @@ public class Wordle extends Control {
     }
 
     public void setTweet(TweetInfo status) {
-        System.out.println("new status line: " + status);
         tweetInfoProperty.set(status);
     }    
     

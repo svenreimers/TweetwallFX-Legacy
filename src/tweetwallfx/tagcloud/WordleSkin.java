@@ -5,6 +5,8 @@
  */
 package tweetwallfx.tagcloud;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,10 +25,17 @@ import javafx.animation.SequentialTransition;
 import javafx.animation.Transition;
 import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -53,6 +62,7 @@ public class WordleSkin extends SkinBase<Wordle> {
     private final Pane pane;
     private List<Word> limitedWords;
     private Set<Word> tweetWords = Collections.emptySet();
+    private HBox hbox;
 
     public WordleSkin(Wordle wordle) {
         super(wordle);
@@ -147,13 +157,53 @@ public class WordleSkin extends SkinBase<Wordle> {
     private void cloudToTweet() {
 
         Bounds layoutBounds = pane.getLayoutBounds();
+        TweetInfo tweetInfo = getSkinnable().tweetInfoProperty.get();
 
-        List<TweetWord> tweetLayout = recalcTweetLayout(getSkinnable().tweetInfoProperty.get());
+        Point2D minPosTweet = new Point2D(layoutBounds.getWidth() / 6d, layoutBounds.getHeight() / 3d);
+        
+        // layout image and meta data first
+        
+        hbox = new HBox(20);
+        hbox.setStyle("-fx-padding: 20px;");
+        hbox.setPrefHeight(80); 
+        hbox.setMaxHeight(80); 
+        hbox.setLayoutX(minPosTweet.getX());
+        hbox.setLayoutY(minPosTweet.getY());
+        
+        HBox hImage = new HBox();
+        hImage.setPadding(new Insets(10));
+        Image image = new Image(tweetInfo.getImageURL(), 48, 48, true, false);
+        ImageView imageView = new ImageView(image);
+        Rectangle clip = new Rectangle(48, 48);
+        clip.setArcWidth(10);
+        clip.setArcHeight(10);
+        imageView.setClip(clip);
+        hImage.getChildren().add(imageView);
+
+        HBox hName = new HBox(20);
+        Label name = new Label(tweetInfo.getName());
+        name.setStyle("-fx-font: 24px \"Andalus\"; -fx-text-fill: #292F33; -fx-font-weight: bold;");
+        DateFormat df = new SimpleDateFormat("HH:mm:ss");
+        Label handle = new Label("@" + tweetInfo.getHandle() + " · " + df.format(tweetInfo.getDate()));
+        handle.setStyle("-fx-font: 22px \"Andalus\"; -fx-text-fill: #8899A6;");
+        hName.getChildren().addAll(name, handle);                
+        
+        VBox vbox = new VBox(10);
+        vbox.getChildren().addAll(hName);
+        hbox.getChildren().addAll(hImage, vbox);        
+        
+        hbox.setOpacity(0);        
+        pane.getChildren().add(hbox);        
+        
+        
+        List<TweetWord> tweetLayout = recalcTweetLayout(tweetInfo);
 
         ParallelTransition fadeOuts = new ParallelTransition();
         ParallelTransition moves = new ParallelTransition();
         ParallelTransition fadeIns = new ParallelTransition();
         SequentialTransition morph = new SequentialTransition(fadeOuts, moves, fadeIns);
+
+        Point2D minPosTweetText = minPosTweet.add(0, hbox.getHeight());
 
         tweetLayout.stream().forEach(tweetWord -> {
             Word word = new Word(tweetWord.text.trim(), -2);
@@ -171,8 +221,8 @@ public class WordleSkin extends SkinBase<Wordle> {
                 LocationTransition lt = new LocationTransition(Duration.seconds(1.5), textNode);
                 lt.setFromX(textNode.getLayoutX());
                 lt.setFromY(textNode.getLayoutY());
-                lt.setToX(bounds.getMinX());
-                lt.setToY(layoutBounds.getHeight() - bounds.getMaxY());
+                lt.setToX(minPosTweetText.getX() + bounds.getMinX());
+                lt.setToY(minPosTweetText.getY() + bounds.getMinY());
                 moves.getChildren().add(lt);
             } else {
                 Text textNode = createTextNode(word);
@@ -182,8 +232,8 @@ public class WordleSkin extends SkinBase<Wordle> {
 
                 Bounds bounds = tweetWord.bounds;
 
-                textNode.setLayoutX(bounds.getMinX());
-                textNode.setLayoutY(layoutBounds.getHeight() - bounds.getMaxY());
+                textNode.setLayoutX(minPosTweetText.getX() + bounds.getMinX());
+                textNode.setLayoutY(minPosTweetText.getY() + bounds.getMinY());
                 textNode.setOpacity(0);
                 pane.getChildren().add(textNode);
                 FadeTransition ft = new FadeTransition(Duration.seconds(1.5), textNode);
@@ -203,6 +253,12 @@ public class WordleSkin extends SkinBase<Wordle> {
             });
         });
         word2TextMap.clear();
+
+        // add fade in for image and meta data
+        FadeTransition ft = new FadeTransition(Duration.seconds(1.5), hbox);
+        ft.setToValue(1);                
+        fadeIns.getChildren().add(ft);
+                
         morph.play();
     }
 
@@ -275,6 +331,15 @@ public class WordleSkin extends SkinBase<Wordle> {
 
         tweetWordList.clear();
 
+        if (null != hbox) {
+            FadeTransition ft = new FadeTransition(Duration.seconds(1.5), hbox);
+            ft.setToValue(0);
+            fadeOuts.getChildren().add(ft);
+            ft.setOnFinished(event ->  {
+                pane.getChildren().remove(hbox);
+            });
+        }
+        
         morph.play();
     }
 
@@ -360,7 +425,7 @@ public class WordleSkin extends SkinBase<Wordle> {
 
         double size = defaultFont.getSize();
         if (weight == -1) {
-            size = 24;
+            size = TWEET_FONT_SIZE;
         } else if (weight == -2) {
             size = 18;
         } else {
@@ -397,12 +462,13 @@ public class WordleSkin extends SkinBase<Wordle> {
                     Text textWord = new Text(w.concat(" "));
                     String color = "#292F33";
                     textWord.setStyle("-fx-fill: " + color + ";");
-                    textWord.setFont(Font.font(defaultFont.getFamily(), 24));
+                    textWord.setFont(Font.font(defaultFont.getFamily(), TWEET_FONT_SIZE));
                     flow.getChildren().add(textWord);
                 });
         flow.requestLayout();
         return flow.getChildren().stream().map(node -> new TweetWord(node.getBoundsInParent(), ((Text) node).getText())).collect(Collectors.toList());
     }
+    private static final int TWEET_FONT_SIZE = 36;
 
     private Map<Word, Bounds> recalcTagLayout(List<Word> words) {
         List<Bounds> boundsList = new ArrayList<>();
