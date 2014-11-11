@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -100,6 +101,7 @@ public class TagTweets {
 
     private final ObservableList<Word> obsFadeOutWords = FXCollections.<Word>observableArrayList();
     private final ObservableList<Text> obsFadeInWords = FXCollections.<Text>observableArrayList();
+    private Twitter twitter;
 
     public TagTweets(Configuration conf, String searchText, BorderPane root) {
         this.conf = conf;
@@ -133,7 +135,7 @@ public class TagTweets {
             System.out.println("** 1. Creating Tag Cloud for " + searchText);
             Query query = new Query(searchText);
             query.setCount(100);
-            Twitter twitter = new TwitterFactory(conf).getInstance();
+            twitter = new TwitterFactory(conf).getInstance();
             QueryResult result = twitter.search(query);
 
             buildTagCloud(result.getTweets());
@@ -239,39 +241,56 @@ public class TagTweets {
             this.parents = parents;
         }
 
+        private TweetInfo getTweet() throws InterruptedException, TwitterException {
+            TweetInfo tweet = tweets.poll(5, TimeUnit.SECONDS);
+            if (tweet == null) {
+                Query query = new Query(searchText);
+                query.setCount(10);
+                QueryResult result = twitter.search(query);
+                Optional<Status> status = result.getTweets().stream().skip((long) Math.random() * 10).findFirst();
+                if (status.isPresent()) {
+                    tweet = new TweetInfo(status.get());
+                }
+            }
+            return tweet;
+        }
+
         @Override
         protected Void call() throws Exception {
             while (true) {
                 if (isCancelled()) {
                     break;
                 }
+
+                TweetInfo tweet = getTweet();
+                if (null != tweet) {
 //                parents.put(createTweetInfoBox(tweets.take()));
-                TweetInfo tweet = tweets.take();
-                Platform.runLater(() -> wordle.setTweet(tweet));
-                Set<Word> tweetWords = addTweetToCloud(tweet);
-                Thread.sleep(3000);
-                Platform.runLater(() -> wordle.setLayoutMode(Wordle.LayoutMode.TWEET));
-                Thread.sleep(8000);
-                Platform.runLater(() -> wordle.setLayoutMode(Wordle.LayoutMode.WORDLE));
-                Thread.sleep(3000);
-                removeTweetFromCloud(tweetWords);
-                Platform.runLater(()
-                        -> wordle.setWords(tree.entrySet().stream()
-                                .sorted(comparator.reversed())
-                                .limit(NUM_MAX_WORDS).map(entry -> new Word(entry.getKey(), entry.getValue())).collect(Collectors.toList()))
-                );
-                Thread.sleep(5000);
+                    Platform.runLater(() -> wordle.setTweet(tweet));
+                    Set<Word> tweetWords = addTweetToCloud(tweet);
+                    Thread.sleep(3000);
+                    Platform.runLater(() -> wordle.setLayoutMode(Wordle.LayoutMode.TWEET));
+                    Thread.sleep(8000);
+                    Platform.runLater(() -> wordle.setLayoutMode(Wordle.LayoutMode.WORDLE));
+                    Thread.sleep(5000);
+                    removeTweetFromCloud(tweetWords);
+                    Platform.runLater(()
+                            -> wordle.setWords(tree.entrySet().stream()
+                                    .sorted(comparator.reversed())
+                                    .limit(NUM_MAX_WORDS).map(entry -> new Word(entry.getKey(), entry.getValue())).collect(Collectors.toList()))
+                    );
+                    Thread.sleep(5000);
+                }
             }
             return null;
         }
-        
+
         private void removeTweetFromCloud(Set<Word> tweetWords) {
             System.out.println("Remove tweet from cloud");
             List<Word> words = new ArrayList<>(wordle.wordsProperty.get());
             words.removeAll(tweetWords);
             Platform.runLater(() -> wordle.wordsProperty.set(words));
         }
-        
+
         private Set<Word> addTweetToCloud(TweetInfo tweetInfo) {
             System.out.println("Add tweet to cloud");
             String text = tweetInfo.getText();
@@ -287,7 +306,6 @@ public class TagTweets {
             Platform.runLater(() -> wordle.wordsProperty.set(words));
             return tweetWords;
         }
-
 
         private Parent createTweetInfoBox(TweetInfo info) {
 
