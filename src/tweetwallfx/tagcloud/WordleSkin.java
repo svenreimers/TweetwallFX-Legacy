@@ -27,6 +27,7 @@ import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
+import javafx.scene.AccessibleAttribute;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
@@ -63,6 +64,7 @@ public class WordleSkin extends SkinBase<Wordle> {
     private List<Word> limitedWords;
     private Set<Word> tweetWords = Collections.emptySet();
     private HBox hbox;
+    private Point2D lowerLeft;
 
     public WordleSkin(Wordle wordle) {
         super(wordle);
@@ -154,48 +156,43 @@ public class WordleSkin extends SkinBase<Wordle> {
         updateCloud();
     }
 
+//    private Point2D layoutTweetWord(Bounds targetBounds, Point2D upperLeft, double maxWidth) {
+//        double y = upperLeft.getY() + targetBounds.getMinY();
+//        double x = upperLeft.getX() + targetBounds.getMinX();
+//        double rightMargin = upperLeft.getX() + maxWidth;
+//        while (x + targetBounds.getWidth() > rightMargin) {
+//            y += targetBounds.getHeight();
+//            x -= maxWidth;
+//        }
+//        return new Point2D(x, y);
+//    }
+    private Point2D tweetWordLineOffset(Bounds targetBounds, Point2D upperLeft, double maxWidth, Point2D lineOffset) {
+        double y = upperLeft.getY() + targetBounds.getMinY();
+        double x = upperLeft.getX() + targetBounds.getMinX() - lineOffset.getX();
+        double rightMargin = upperLeft.getX() + maxWidth;
+        if (x + targetBounds.getWidth() > rightMargin) {
+            return new Point2D(lineOffset.getX() + (x - upperLeft.getX()), lineOffset.getY() + targetBounds.getHeight());
+        }
+        return lineOffset;
+    }
+
+    private Point2D layoutTweetWord(Bounds targetBounds, Point2D upperLeft, Point2D lineOffset) {
+        double y = upperLeft.getY() + targetBounds.getMinY() + lineOffset.getY();
+        double x = upperLeft.getX() + targetBounds.getMinX() - lineOffset.getX();
+        return new Point2D(x, y);
+    }
+    
+    Point2D tweetLineOffset = new Point2D(0, 0);
+
     private void cloudToTweet() {
 
         Bounds layoutBounds = pane.getLayoutBounds();
         TweetInfo tweetInfo = getSkinnable().tweetInfoProperty.get();
 
-        Point2D minPosTweet = new Point2D(layoutBounds.getWidth() / 6d, layoutBounds.getHeight() / 3d);
-        
-        // layout image and meta data first
-        
-        hbox = new HBox(20);
-        hbox.setStyle("-fx-padding: 20px;");
-        hbox.setPrefHeight(80); 
-        hbox.setMaxHeight(80); 
-        hbox.setLayoutX(minPosTweet.getX());
-        hbox.setLayoutY(minPosTweet.getY());
-        
-        HBox hImage = new HBox();
-        hImage.setPadding(new Insets(10));
-        Image image = new Image(tweetInfo.getImageURL(), 48, 48, true, false);
-        ImageView imageView = new ImageView(image);
-        Rectangle clip = new Rectangle(48, 48);
-        clip.setArcWidth(10);
-        clip.setArcHeight(10);
-        imageView.setClip(clip);
-        hImage.getChildren().add(imageView);
+        Point2D minPosTweetText = new Point2D(layoutBounds.getWidth() / 6d, layoutBounds.getHeight() / 3d);
 
-        HBox hName = new HBox(20);
-        Label name = new Label(tweetInfo.getName());
-        name.setStyle("-fx-font: 24px \"Andalus\"; -fx-text-fill: #292F33; -fx-font-weight: bold;");
-        DateFormat df = new SimpleDateFormat("HH:mm:ss");
-        Label handle = new Label("@" + tweetInfo.getHandle() + " · " + df.format(tweetInfo.getDate()));
-        handle.setStyle("-fx-font: 22px \"Andalus\"; -fx-text-fill: #8899A6;");
-        hName.getChildren().addAll(name, handle);                
-        
-        VBox vbox = new VBox(10);
-        vbox.getChildren().addAll(hName);
-        hbox.getChildren().addAll(hImage, vbox);        
-        
-        hbox.setOpacity(0);        
-        pane.getChildren().add(hbox);        
-        
-        
+        double width = layoutBounds.getWidth() * (2 / 3d);
+
         List<TweetWord> tweetLayout = recalcTweetLayout(tweetInfo);
 
         ParallelTransition fadeOuts = new ParallelTransition();
@@ -203,7 +200,8 @@ public class WordleSkin extends SkinBase<Wordle> {
         ParallelTransition fadeIns = new ParallelTransition();
         SequentialTransition morph = new SequentialTransition(fadeOuts, moves, fadeIns);
 
-        Point2D minPosTweetText = minPosTweet.add(0, hbox.getHeight());
+        lowerLeft = new Point2D(minPosTweetText.getX(), minPosTweetText.getY());
+        tweetLineOffset = new Point2D(0, 0);
 
         tweetLayout.stream().forEach(tweetWord -> {
             Word word = new Word(tweetWord.text.trim(), -2);
@@ -221,8 +219,13 @@ public class WordleSkin extends SkinBase<Wordle> {
                 LocationTransition lt = new LocationTransition(Duration.seconds(1.5), textNode);
                 lt.setFromX(textNode.getLayoutX());
                 lt.setFromY(textNode.getLayoutY());
-                lt.setToX(minPosTweetText.getX() + bounds.getMinX());
-                lt.setToY(minPosTweetText.getY() + bounds.getMinY());
+                tweetLineOffset = tweetWordLineOffset(bounds, lowerLeft, width, tweetLineOffset);
+                Point2D twPoint = layoutTweetWord(bounds, minPosTweetText, tweetLineOffset);
+                lt.setToX(twPoint.getX());
+                lt.setToY(twPoint.getY());
+                if (twPoint.getY() > lowerLeft.getY()) {
+                    lowerLeft = lowerLeft.add(0, twPoint.getY() - lowerLeft.getY());
+                }
                 moves.getChildren().add(lt);
             } else {
                 Text textNode = createTextNode(word);
@@ -232,8 +235,14 @@ public class WordleSkin extends SkinBase<Wordle> {
 
                 Bounds bounds = tweetWord.bounds;
 
-                textNode.setLayoutX(minPosTweetText.getX() + bounds.getMinX());
-                textNode.setLayoutY(minPosTweetText.getY() + bounds.getMinY());
+                tweetLineOffset = tweetWordLineOffset(bounds, lowerLeft, width, tweetLineOffset);
+                Point2D twPoint = layoutTweetWord(bounds, minPosTweetText, tweetLineOffset);
+
+                textNode.setLayoutX(twPoint.getX());
+                textNode.setLayoutY(twPoint.getY());
+                if (twPoint.getY() > lowerLeft.getY()) {
+                    lowerLeft = lowerLeft.add(0, twPoint.getY() - lowerLeft.getY());
+                }
                 textNode.setOpacity(0);
                 pane.getChildren().add(textNode);
                 FadeTransition ft = new FadeTransition(Duration.seconds(1.5), textNode);
@@ -254,11 +263,44 @@ public class WordleSkin extends SkinBase<Wordle> {
         });
         word2TextMap.clear();
 
+        // layout image and meta data first
+        hbox = new HBox(20);
+        hbox.setStyle("-fx-padding: 20px;");
+        hbox.setPrefHeight(80);
+        hbox.setMaxHeight(80);
+        hbox.setLayoutX(lowerLeft.getX());
+        hbox.setLayoutY(lowerLeft.getY());
+
+        HBox hImage = new HBox();
+        hImage.setPadding(new Insets(10));
+        Image image = new Image(tweetInfo.getImageURL(), 48, 48, true, false);
+        ImageView imageView = new ImageView(image);
+        Rectangle clip = new Rectangle(48, 48);
+        clip.setArcWidth(10);
+        clip.setArcHeight(10);
+        imageView.setClip(clip);
+        hImage.getChildren().add(imageView);
+
+        HBox hName = new HBox(20);
+        Label name = new Label(tweetInfo.getName());
+        name.setStyle("-fx-font: 24px \"Andalus\"; -fx-text-fill: #292F33; -fx-font-weight: bold;");
+        DateFormat df = new SimpleDateFormat("HH:mm:ss");
+        Label handle = new Label("@" + tweetInfo.getHandle() + " · " + df.format(tweetInfo.getDate()));
+        handle.setStyle("-fx-font: 22px \"Andalus\"; -fx-text-fill: #8899A6;");
+        hName.getChildren().addAll(name, handle);
+
+        VBox vbox = new VBox(10);
+        vbox.getChildren().addAll(hName);
+        hbox.getChildren().addAll(hImage, vbox);
+
+        hbox.setOpacity(0);
+        pane.getChildren().add(hbox);
+
         // add fade in for image and meta data
         FadeTransition ft = new FadeTransition(Duration.seconds(1.5), hbox);
-        ft.setToValue(1);                
+        ft.setToValue(1);
         fadeIns.getChildren().add(ft);
-                
+
         morph.play();
     }
 
@@ -335,11 +377,11 @@ public class WordleSkin extends SkinBase<Wordle> {
             FadeTransition ft = new FadeTransition(Duration.seconds(1.5), hbox);
             ft.setToValue(0);
             fadeOuts.getChildren().add(ft);
-            ft.setOnFinished(event ->  {
+            ft.setOnFinished(event -> {
                 pane.getChildren().remove(hbox);
             });
         }
-        
+
         morph.play();
     }
 
