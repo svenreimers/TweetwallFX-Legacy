@@ -8,7 +8,6 @@ package tweetwallfx.tagcloud;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,7 +27,6 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.scene.AccessibleAttribute;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
@@ -36,7 +34,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -68,10 +65,34 @@ public class WordleSkin extends SkinBase<Wordle> {
     private Point2D lowerLeft;
     private HBox mediaBox;
 
+    private ImageView logo;
+
     public WordleSkin(Wordle wordle) {
         super(wordle);
 
         pane = new Pane();
+
+        getSkinnable().logoProperty().addListener((obs, oldValue, newValue)  -> {
+            if (null != logo) {
+                pane.getChildren().remove(logo);                
+            }
+            System.out.println("Logo: " + newValue);
+            logo = new ImageView(newValue);
+
+            pane.getChildren().add(logo);
+            logo.setLayoutX(0);
+            logo.setLayoutY(pane.getHeight() - logo.getImage().getHeight());
+        });
+
+        System.out.println("LOGO: " + getSkinnable().logoProperty().getValue());
+        
+        logo = new ImageView(getSkinnable().logoProperty().getValue());
+        logo.getStyleClass().setAll("logo");
+
+        pane.getChildren().add(logo);
+        logo.setLayoutX(0);
+        logo.setLayoutY(pane.getHeight() - logo.getImage().getHeight());
+
 //        pane.setStyle("-fx-border-width: 1px; -fx-border-color: black;");
         this.getChildren().add(pane);
         updateCloud();
@@ -87,6 +108,7 @@ public class WordleSkin extends SkinBase<Wordle> {
         });
 
         pane.widthProperty().addListener(bounds -> {
+            logo.setLayoutY(pane.getHeight() - logo.getImage().getHeight());
             switch (wordle.layoutModeProperty.get()) {
                 case TWEET:
                     break;
@@ -97,6 +119,7 @@ public class WordleSkin extends SkinBase<Wordle> {
         });
 
         pane.heightProperty().addListener(bounds -> {
+            logo.setLayoutY(pane.getHeight() - logo.getImage().getHeight());
             switch (wordle.layoutModeProperty.get()) {
                 case TWEET:
                     break;
@@ -128,16 +151,10 @@ public class WordleSkin extends SkinBase<Wordle> {
                     .filter(l -> !l.startsWith("http:"))
                     .filter(l -> !l.startsWith("https:"))
                     .map(l -> l.toLowerCase())
-                    .filter(l -> !stopList.contains(l)).map(l -> new Word(l, -2)).collect(Collectors.toSet());
+                    .filter(l -> !StopList.contains(l)).map(l -> new Word(l, -2)).collect(Collectors.toSet());
 
         });
     }
-
-    private final List<String> stopList = new ArrayList<>(
-            Arrays.asList("http", "https", "has", "have", "do", "for", "are", "the", "and",
-                    "with", "here", "#devoxx", "active", "see", "next", "will", "any", "off", "there", "while", "just", "all", "from", "got", "think", "nice",
-                    "ask", "can", "you", "week", "some", "not", "didn", "isn", "per", "how", "show", "out", "but", "last", "your", "one", "should",
-                    "now", "also", "done", "will", "become", "did", "what", "when", "let", "that", "this", "always", "where", "our"));
 
 //    private void addTweetToCloud() {
 //        System.out.println("Add tweet to cloud");
@@ -148,7 +165,7 @@ public class WordleSkin extends SkinBase<Wordle> {
 //                .filter(l -> !l.startsWith("http:"))
 //                .filter(l -> !l.startsWith("https:"))
 //                .map(l -> l.toLowerCase())
-//                .filter(l -> !stopList.contains(l)).map(l -> new Word(l, 0)).collect(Collectors.toSet());                
+//                .filter(l -> !StopList.contains(l)).map(l -> new Word(l, 0)).collect(Collectors.toSet());                
 //        List<Word> words = getSkinnable().wordsProperty.get();
 //        words.addAll(tweetWords);
 //        Platform.runLater(() -> getSkinnable().wordsProperty.set(words));
@@ -183,7 +200,7 @@ public class WordleSkin extends SkinBase<Wordle> {
         double x = upperLeft.getX() + targetBounds.getMinX() - lineOffset.getX();
         return new Point2D(x, y);
     }
-    
+
     Point2D tweetLineOffset = new Point2D(0, 0);
 
     private void cloudToTweet() {
@@ -191,7 +208,7 @@ public class WordleSkin extends SkinBase<Wordle> {
         Bounds layoutBounds = pane.getLayoutBounds();
         TweetInfo tweetInfo = getSkinnable().tweetInfoProperty.get();
 
-        Point2D minPosTweetText = new Point2D(layoutBounds.getWidth() / 6d, layoutBounds.getHeight() / 3d);
+        Point2D minPosTweetText = new Point2D(layoutBounds.getWidth() / 6d, (layoutBounds.getHeight() - logo.getImage().getHeight()) / 4d);
 
         double width = layoutBounds.getWidth() * (2 / 3d);
 
@@ -285,10 +302,12 @@ public class WordleSkin extends SkinBase<Wordle> {
 
 //        HBox hName = new HBox(20);
         Label name = new Label(tweetInfo.getName());
-        name.setStyle("-fx-font: 36px \"Calibri\"; -fx-text-fill: #e1ecee; -fx-font-weight: bold;");
+        name.getStyleClass().setAll("name");
+//        name.setStyle("-fx-font: 36px \"Calibri\"; -fx-text-fill: #e1ecee; -fx-font-weight: bold;");
         DateFormat df = new SimpleDateFormat("HH:mm:ss");
         Label handle = new Label("@" + tweetInfo.getHandle() + " · " + df.format(tweetInfo.getDate()));
-        handle.setStyle("-fx-font: 28px \"Calibri\"; -fx-text-fill: #8899A6;");
+        handle.getStyleClass().setAll("handle");
+//        handle.setStyle("-fx-font: 28px \"Calibri\"; -fx-text-fill: #8899A6;");
 //        hName.getChildren().addAll(name, handle);
 //        hName.setAlignment(Pos.BOTTOM_CENTER);
 
@@ -300,7 +319,7 @@ public class WordleSkin extends SkinBase<Wordle> {
         hbox.setAlignment(Pos.CENTER);
         pane.getChildren().add(hbox);
 
-        if(tweetInfo.getMediaEntities().length > 0) {
+        if (tweetInfo.getMediaEntities().length > 0) {
 //            System.out.println("Media detected: " + tweetInfo.getText() + " " + Arrays.toString(tweetInfo.getMediaEntities()));
             mediaBox = new HBox();
             hImage.setPadding(new Insets(10));
@@ -315,18 +334,18 @@ public class WordleSkin extends SkinBase<Wordle> {
 //            imageView.setClip(clip);
             mediaBox.getChildren().add(mediaView);
             mediaBox.setOpacity(0);
-            mediaBox.setLayoutX(layoutBounds.getWidth()/2d);
+            mediaBox.setLayoutX(layoutBounds.getWidth() / 2d);
             mediaBox.setLayoutY(lowerLeft.getY() + 100);
-            mediaBox.setMaxSize(layoutBounds.getWidth()/2d, layoutBounds.getHeight()-50);
-            mediaView.setFitWidth(mediaBox.getWidth()-10);
-            mediaView.setFitHeight(mediaBox.getHeight()-10);
+            mediaBox.setMaxSize(layoutBounds.getWidth() / 2d, layoutBounds.getHeight() - 50);
+            mediaView.setFitWidth(mediaBox.getWidth() - 10);
+            mediaView.setFitHeight(mediaBox.getHeight() - 10);
             // add fade in for image and meta data
             FadeTransition ft = new FadeTransition(Duration.seconds(1.5), mediaBox);
             ft.setToValue(1);
-            fadeIns.getChildren().add(ft);  
+            fadeIns.getChildren().add(ft);
             pane.getChildren().add(mediaBox);
-        }        
-        
+        }
+
         // add fade in for image and meta data
         FadeTransition ft = new FadeTransition(Duration.seconds(1.5), hbox);
         ft.setToValue(1);
@@ -470,7 +489,7 @@ public class WordleSkin extends SkinBase<Wordle> {
             lt.setFromX(textNode.getLayoutX());
             lt.setFromY(textNode.getLayoutY());
             lt.setToX(bounds.getMinX() + layoutBounds.getWidth() / 2d);
-            lt.setToY(bounds.getMinY() + +layoutBounds.getHeight() / 2d + bounds.getHeight() / 2d);
+            lt.setToY(bounds.getMinY() + layoutBounds.getHeight() / 2d + bounds.getHeight() / 2d);
             moves.getChildren().add(lt);
         });
 
@@ -508,7 +527,7 @@ public class WordleSkin extends SkinBase<Wordle> {
         if (weight == -1) {
             size = TWEET_FONT_SIZE;
         } else if (weight == -2) {
-            size = MINIMUM_FONT_SIZE -10;
+            size = MINIMUM_FONT_SIZE - 10;
         } else {
             // linear
             //y = a+bx
@@ -528,7 +547,8 @@ public class WordleSkin extends SkinBase<Wordle> {
 
     private Text createTextNode(Word word) {
         Text textNode = new Text(word.text);
-        textNode.setStyle("-fx-fill: white; -fx-padding: 5px");
+        textNode.getStyleClass().setAll("tag");
+        textNode.setStyle("-fx-padding: 5px");
         fontSizeAdaption(textNode, word.weight);
         return textNode;
     }
@@ -541,8 +561,9 @@ public class WordleSkin extends SkinBase<Wordle> {
         pattern.splitAsStream(info.getText())
                 .forEach(w -> {
                     Text textWord = new Text(w.concat(" "));
+                    textWord.getStyleClass().setAll("tag");
                     String color = "#292F33";
-                    textWord.setStyle("-fx-fill: " + color + ";");
+//                    textWord.setStyle("-fx-fill: " + color + ";");
                     textWord.setFont(Font.font(defaultFont.getFamily(), TWEET_FONT_SIZE));
                     flow.getChildren().add(textWord);
                 });
@@ -553,8 +574,14 @@ public class WordleSkin extends SkinBase<Wordle> {
     private static final int MINIMUM_FONT_SIZE = 36;
     private static final int MAX_FONT_SIZE = 72;
 
-
     private Map<Word, Bounds> recalcTagLayout(List<Word> words) {
+        Bounds layoutBounds = pane.getLayoutBounds();
+        Bounds logoLayout = logo.getBoundsInParent();
+        Bounds logoBounds = new BoundingBox(logoLayout.getMinX() - layoutBounds.getWidth() / 2d, 
+                logoLayout.getMinY() - layoutBounds.getHeight() / 2d, 
+                logoLayout.getWidth(), 
+                logoLayout.getHeight());
+        
         List<Bounds> boundsList = new ArrayList<>();
         Text firstNode = createTextNode(words.get(0));
         double firstWidth = firstNode.getLayoutBounds().getWidth();
@@ -595,8 +622,16 @@ public class WordleSkin extends SkinBase<Wordle> {
                     Bounds mayBe = new BoundingBox(center.getX() - width / 2d,
                             center.getY() - height / 2d, width, height);
                     boolean useable = true;
+                    //check if bounds are full on screen:
+                    if (mayBe.getMinX() + layoutBounds.getWidth()/2d < 0 || 
+                            mayBe.getMinY() + layoutBounds.getHeight() / 2d < 0 ||
+                            mayBe.getMaxX() + layoutBounds.getWidth()/2d > layoutBounds.getMaxX() || 
+                            mayBe.getMaxY() + layoutBounds.getHeight()/2d > layoutBounds.getMaxY() 
+                            ) {
+                        useable = false;
+                    }
                     for (int prev = 0; prev < i; ++prev) {
-                        if (mayBe.intersects(boundsList.get(prev))) {
+                        if (mayBe.intersects(boundsList.get(prev)) || (null != logo && mayBe.intersects(logoBounds))) {
                             useable = false;
                             break;
                         }

@@ -36,6 +36,7 @@ public class WordleControlTest extends Application {
         wordle.setWords(words);
         
         BorderPane pane = new BorderPane(wordle);
+        wordle.setLayoutMode(Wordle.LayoutMode.WORDLE);
         
         Scene scene = new Scene(pane, 300, 250);
         

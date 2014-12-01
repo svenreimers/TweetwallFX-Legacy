@@ -5,18 +5,12 @@
  */
 package tweetwallfx.tagcloud;
 
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import twitter.CLogOut;
 import twitter.TwitterOAuth;
 import twitter4j.conf.Configuration;
 
@@ -27,17 +21,17 @@ import twitter4j.conf.Configuration;
 public class TagCloud extends Application {
 
     private Configuration conf;
-    private CLogOut log;
-    private final String hashtag = "#devoxx";
+//    private CLogOut log;
+    private final String hashtag = "#netbeans";// #google";
     private TagTweets tweetsTask;
     
     @Override
     public void start(Stage primaryStage) {
         
-        try {
-            AnchorPane root = FXMLLoader.<AnchorPane>load(this.getClass().getResource("TweetWallFX.fxml"));
-            BorderPane borderPane = (BorderPane) root.lookup("#displayArea");
-            Scene scene = new Scene(root, 800, 600);
+//        try {
+            BorderPane borderPane = new BorderPane();
+            Scene scene = new Scene(borderPane, 800, 600);
+            StopList.add(hashtag);
             
             /* TWITTER */
 //        log=CLogOut.getInstance();
@@ -62,14 +56,15 @@ public class TagCloud extends Application {
                 }
             });
             
-            primaryStage.setTitle("The JavvaFX Tweetwall for Devoox!");
+            primaryStage.setTitle("The JavaFX Tweetwall for NetBeans Day!");
+//            primaryStage.setTitle("The JavaFX Tweetwall for Devoxx!");
             primaryStage.setScene(scene);
             primaryStage.show();
             primaryStage.setFullScreen(true);
             service.start();
-        } catch (IOException ex) {
-            Logger.getLogger(TagCloud.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        } catch (IOException ex) {
+//            Logger.getLogger(TagCloud.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
     
     @Override
