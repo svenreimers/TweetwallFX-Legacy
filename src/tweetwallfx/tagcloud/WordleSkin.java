@@ -587,8 +587,8 @@ public class WordleSkin extends SkinBase<Wordle> {
         double firstWidth = firstNode.getLayoutBounds().getWidth();
         double firstHeight = firstNode.getLayoutBounds().getHeight();
 
-        boundsList.add(new BoundingBox(0,
-                0, firstWidth, firstHeight));
+        boundsList.add(new BoundingBox(-firstWidth / 2d,
+                -firstHeight/2d, firstWidth, firstHeight));
 
         for (int i = 1; i < words.size(); ++i) {
             Word word = words.get(i);
@@ -623,11 +623,11 @@ public class WordleSkin extends SkinBase<Wordle> {
                             center.getY() - height / 2d, width, height);
                     boolean useable = true;
                     //check if bounds are full on screen:
-                    if (mayBe.getMinX() + layoutBounds.getWidth()/2d < 0 || 
+                    if (layoutBounds.getWidth() > 0 && layoutBounds.getHeight() > 0 && (mayBe.getMinX() + layoutBounds.getWidth()/2d < 0 || 
                             mayBe.getMinY() + layoutBounds.getHeight() / 2d < 0 ||
                             mayBe.getMaxX() + layoutBounds.getWidth()/2d > layoutBounds.getMaxX() || 
                             mayBe.getMaxY() + layoutBounds.getHeight()/2d > layoutBounds.getMaxY() 
-                            ) {
+                            )) {
                         useable = false;
                     }
                     for (int prev = 0; prev < i; ++prev) {
