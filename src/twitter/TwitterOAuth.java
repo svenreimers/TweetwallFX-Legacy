@@ -1,6 +1,10 @@
 package twitter;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 import twitter4j.Twitter;
@@ -35,23 +39,40 @@ public class TwitterOAuth {
     
     private String error="";
     private Configuration conf=null;
-    
-    private static TwitterOAuth instance=null;
+    @Parameter(names = "-oAuthFile", description = "File with OAuth Properties")
+    private File oAuthFile = null;
+    @Parameter(names = "-help", help = true)
+    private boolean help;
+    private static TwitterOAuth instance = null;
         
-    public static TwitterOAuth getInstance() { 
+    public static TwitterOAuth getInstance(final String... args) { 
         if(instance==null){
-            instance=new TwitterOAuth();
+            instance=new TwitterOAuth(args);
         } 
         return instance;
     }
     
-    private TwitterOAuth(){
+    private TwitterOAuth(final String... args){
+        new JCommander(this).parse(args);
         Properties props = new Properties();
         
         try {
-            /* MyRealOAuth.properties -> this file is not commited to the repo. 
-               Ask for it or provide your own keys. */
-            props.load(TwitterOAuth.class.getResourceAsStream("MyOAuth.properties"));
+            if (null == oAuthFile) {
+                System.out.println("Using in-built authentication information");
+                /* MyRealOAuth.properties -> this file is not commited to the repo. 
+                 Ask for it or provide your own keys. */
+                props.load(TwitterOAuth.class.getResourceAsStream("MyOAuth.properties"));
+            } else {
+                System.out.println("Using authentication information from provided file: " + oAuthFile.getAbsolutePath());
+
+                if (!oAuthFile.exists()) {
+                    throw new IllegalArgumentException("Provided authentication file does not exist!");
+                }
+
+                try (final FileReader fr = new FileReader(oAuthFile)) {
+                    props.load(fr);
+                }
+            }
         } catch (FileNotFoundException ex) {
             System.out.println("Error finding properties file: "+ ex);
         } catch (IOException ex) {
