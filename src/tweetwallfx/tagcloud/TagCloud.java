@@ -5,6 +5,7 @@
  */
 package tweetwallfx.tagcloud;
 
+import java.util.List;
 import javafx.application.Application;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -41,7 +42,8 @@ public class TagCloud extends Application {
                 @Override protected Task<Void> createTask() {   
                     Task<Void> task = new Task<Void>(){
                         @Override protected Void call() throws Exception {
-                            conf = TwitterOAuth.getInstance().readOAuth();
+                            final List<String> rawParameters = getParameters().getRaw();
+                            conf = TwitterOAuth.getInstance(rawParameters.toArray(new String[rawParameters.size()])).readOAuth();
                             return null;
                         }
                     };
